@@ -1,4 +1,4 @@
-@testset "Grids" begin
+@testset "SimpleGrids" begin
 
     # with a shift to the grid element, check if produce the correct floored index
     function check(grid, range, shift, idx_shift)
@@ -114,6 +114,62 @@
         @test floor(gauss, gauss[end]) == gauss.size-1
         @test floor(gauss, 1.0) == gauss.size-1
     end
+
+    @testset "LogGrid" begin
+        loggrid = SimpleGrid.Log{Float64}([0.0, 1.0], 6, 0.001,false )
+        println(loggrid.grid)
+        @test floor(loggrid, 0.0) == 1
+        @test floor(loggrid, loggrid[1]) == 1
+
+        δ = 1.0e-12
+        check(loggrid, 2:loggrid.size - 1, δ, 0)
+        check(loggrid, 2:loggrid.size - 1, -δ, -1)
+
+        @test floor(loggrid, loggrid[end]) == loggrid.size-1
+        @test floor(loggrid, 1.0) == loggrid.size-1
+
+        #loggrid = Grid.Log{Float64,2}(0.0, 1.0, (true, true))
+        loggrid = SimpleGrid.Log{Float64}([0.0, 1.0], 6, 0.001,false )
+        @test floor(loggrid, 0.0) == 1
+        @test floor(loggrid, loggrid[1]) == 1
+
+        δ = 1.0e-12
+        check(loggrid, 2:loggrid.size - 1, δ, 0)
+        check(loggrid, 2:loggrid.size - 1, -δ, -1)
+
+        @test floor(loggrid, loggrid[end]) == loggrid.size-1
+        @test floor(loggrid, 1.0) == loggrid.size-1
+    end
+
+end
+
+@testset "CompositeGrids" begin
+
+    # with a shift to the grid element, check if produce the correct floored index
+    function check(grid, range, shift, idx_shift)
+        for i in range
+            @test(floor(grid, grid[i] + shift) == i + idx_shift)
+            # if floor(grid, grid[i] + shift) != i + idx_shift
+            #     return false
+            # end
+        end
+        return true
+    end
+
+    @testset "Composite" begin
+        uniform = SimpleGrid.Uniform{Float64}([0.0, 2.0], 3)
+        gauss1 = SimpleGrid.GaussLegendre{Float64}([0.0, 1.0], 4)
+        gauss2 = SimpleGrid.GaussLegendre{Float64}([1.0, 2.0], 4)
+        comp = CompositeGrid.Composite{
+            Float64,
+            SimpleGrid.Uniform{Float64},
+            SimpleGrid.GaussLegendre{Float64}
+        }(uniform,[gauss1,gauss2])
+
+        println(comp.grid)
+        println(comp.inits)
+    end
+
 
 end
 

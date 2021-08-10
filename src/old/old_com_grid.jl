@@ -105,3 +105,7 @@ function interpolate(f, k::CompositeGrid, grid)
     return ff
 end
 
+if abspath(PROGRAM_FILE) == @__FILE__
+    grid=CompositeGrid([0.0, 1.0, 2.0], 4, :cheb)
+    println(grid.grid)
+end

@@ -1,5 +1,7 @@
 module SimpleGrid
 
+export AbstractGrid
+
 using StaticArrays, FastGaussQuadrature
 
 include("chebyshev.jl")
@@ -128,6 +130,66 @@ end
 Base.getindex(grid::GaussLegendre, i) = grid.grid[i]
 Base.firstindex(grid::GaussLegendre) = 1
 Base.lastindex(grid::GaussLegendre) = grid.size
+
+struct Log{T<:AbstractFloat} <: AbstractGrid{T}
+    bound::SVector{2,T}
+    size::Int
+    grid::Vector{T}
+
+    λ::T
+    d2s::Bool
+
+    function Log{T}(bound, N, minterval, d2s) where {T<:AbstractFloat}
+        grid = zeros(T, N)
+        M = N-2
+        λ = (minterval/(bound[2]-bound[1]))^(1.0/M)
+
+        if d2s
+            grid[1] = bound[1]
+            for i in 1:M+1
+                grid[i+1] = bound[1] + (bound[2]-bound[1])*λ^(M+1-i)
+            end
+        else
+            grid[end] = bound[2]
+            for i in 1:M+1
+                grid[i] = bound[2] - (bound[2]-bound[1])*λ^(i)
+            end
+        end
+
+        return new{T}(bound, N, grid, λ, d2s)
+    end
+end
+
+function Base.floor(grid::Log{T}, x) where {T}
+    if x <= grid.grid[1]
+        return 1
+    elseif x >= grid.grid[end]
+        return grid.size-1
+    end
+
+    a,b=grid.bound[1],grid.bound[2]
+    if grid.d2s
+        i = Base.floor( log((x-a)/(b-a))/log(grid.λ)  )
+        if i > grid.size-2
+            result = 1
+        else
+            result = grid.size-i-1
+        end
+    else
+        i = Base.floor( log((b-x)/(b-a))/log(grid.λ)  )
+        if i > grid.size-2
+            result = grid.size-1
+        else
+            result = i
+        end
+    end
+
+    return result
+end
+
+Base.getindex(grid::Log, i) = grid.grid[i]
+Base.firstindex(grid::Log) = 1
+Base.lastindex(grid::Log) = grid.size
 
 
 end
