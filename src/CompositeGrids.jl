@@ -10,5 +10,7 @@ export SimpleGrid
 include("grid/composite.jl")
 export CompositeGrid
 
+include("grid/interpolate.jl")
+export Interp
 
 end # module

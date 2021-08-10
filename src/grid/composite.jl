@@ -1,5 +1,7 @@
 module CompositeGrid
 
+export LogDensedGrid, Composite
+
 using StaticArrays, FastGaussQuadrature
 include("simple.jl")
 using .SimpleGrid
@@ -75,7 +77,7 @@ function CompositeLogGrid(type, bound, N, minterval, d2s, order, T=Float64)
     end
 
     panel = Log{T}(bound, N, minterval, d2s)
-    println("logpanel:",panel.grid)
+    #println("logpanel:",panel.grid)
     subgrids = Vector{SubGridType}([])
 
     for i in 1:N-1
@@ -99,7 +101,7 @@ function LogDensedGrid(type, bound, dense_on, N, minterval, order, T=Float64)
     end
 
     dense_on = sort(dense_on)
-    @assert bound[1]<dense_on[1]<dense_on[end]<bound[2]
+    @assert bound[1]<=dense_on[1]<dense_on[end]<=bound[2]
     dp = Vector{T}([])
     for i in 1:length(dense_on)
         if i==1
@@ -144,7 +146,11 @@ function LogDensedGrid(type, bound, dense_on, N, minterval, order, T=Float64)
             end
         else
             push!(panelgrid, (dp[i]+dp[i-1])/2.0)
-            push!(d2slist, !d2slist[end])
+            if isempty(d2slist)
+                push!(d2slist, true)
+            else
+                push!(d2slist, !d2slist[end])
+            end
             push!(panelgrid, dp[i])
             push!(d2slist, !d2slist[end])
         end
@@ -156,7 +162,7 @@ function LogDensedGrid(type, bound, dense_on, N, minterval, order, T=Float64)
     end
 
     panel = Arbitrary{T}(panelgrid)
-    println("panel:",panel.grid)
+    #println("panel:",panel.grid)
     subgrids = Vector{Composite{T, Log{T}, SubGridType}}([])
 
     for i in 1:length(panel.grid)-1

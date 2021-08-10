@@ -3,6 +3,7 @@ using CompositeGrids, Test, StaticArrays, LinearAlgebra, Printf, Random, Statist
 
 if isempty(ARGS)
     include("grid.jl")
+    include("interpolate.jl")
 else
     include(ARGS[1])
 end
