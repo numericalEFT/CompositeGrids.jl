@@ -60,4 +60,30 @@ function interp1D(data, xgrid::Composite, x)
     return interp1D(data[head:tail], xgrid.subgrids[i], x)
 end
 
+function interpGrid(data, xgrid, grid)
+    ff = zeros(eltype(data), length(grid))
+    for (xi, x) in enumerate(grid)
+        ff[xi] = interp1D(data, xgrid, x)
+    end
+    return ff
+end
+
+
+function interpGrid(data, xgrid::Composite, grid)
+    ff = zeros(eltype(data), length(grid))
+
+    init, curr = 1, 1
+    for pi in xgrid.panel.size-1
+        if grid[init]< xgrid.panel[pi+1]
+            head, tail = xgrid.inits[pi], xgrid.inits[pi]+xgrid.subgrids[pi].size-1
+            while grid[curr]<xgrid.panel[pi+1]
+                curr += 1
+            end
+            ff[init:curr-1] = interpGrid(data[head:tail], xgrid.subgrids[pi], grid[init:curr-1])
+            init = curr
+        end
+    end
+    return ff
+end
+
 end

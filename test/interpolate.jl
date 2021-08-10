@@ -125,12 +125,14 @@
         @test abs(f(t) - fbar) < 3.e-6 # linear interpolation, so error is δK+δt
 
         tlist = rand(10) * β
+        ff = Interp.interpGrid(data, tgrid, tlist)
         # println(tlist)
 
         for (ti, t) in enumerate(tlist)
             fbar = Interp.interp1D(data, tgrid, t)
             # println("$k, $t, $fbar, ", f(k, t))
             @test abs(f(t) - fbar) < 3.e-6 # linear interpolation, so error is δK+δt
+            @test abs(f(t) - ff[ti]) < 3.e-6 # linear interpolation, so error is δK+δt
         end
     end
 
