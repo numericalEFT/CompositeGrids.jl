@@ -1,14 +1,16 @@
 module SimpleGrid
 
-export AbstractGrid
+export AbstractGrid, OpenGrid, ClosedGrid, Uniform, BaryCheb, GaussLegendre, Arbitrary, Log
 
 using StaticArrays, FastGaussQuadrature
 
 include("chebyshev.jl")
 
-abstract type AbstractGrid{T} end
+abstract type AbstractGrid end
+abstract type OpenGrid <: AbstractGrid end
+abstract type ClosedGrid <: AbstractGrid end
 
-struct Arbitrary{T<:AbstractFloat} <: AbstractGrid{T}
+struct Arbitrary{T<:AbstractFloat} <: ClosedGrid
     bound::SVector{2,T}
     size::Int
     grid::Vector{T}
@@ -20,7 +22,7 @@ struct Arbitrary{T<:AbstractFloat} <: AbstractGrid{T}
     end
 end
 
-function Base.floor(grid::Arbitrary{T}, x) where {T}
+function Base.floor(grid::AbstractGrid, x) #where {T}
     if x <= grid.grid[1]
         return 1
     elseif x >= grid.grid[end]
@@ -28,14 +30,14 @@ function Base.floor(grid::Arbitrary{T}, x) where {T}
     end
 
     result = searchsortedfirst(grid.grid, x)-1
-    return result
+    return Base.floor(Int, result)
 end
 
 Base.getindex(grid::Arbitrary, i) = grid.grid[i]
 Base.firstindex(grid::Arbitrary) = 1
 Base.lastindex(grid::Arbitrary) = grid.size
 
-struct Uniform{T<:AbstractFloat} <: AbstractGrid{T}
+struct Uniform{T<:AbstractFloat} <: ClosedGrid
     bound::SVector{2,T}
     size::Int
     grid::Vector{T}
@@ -65,7 +67,7 @@ Base.getindex(grid::Uniform, i) = grid.grid[i]
 Base.firstindex(grid::Uniform) = 1
 Base.lastindex(grid::Uniform) = grid.size
 
-struct BaryCheb{T<:AbstractFloat} <: AbstractGrid{T}
+struct BaryCheb{T<:AbstractFloat} <: OpenGrid
     bound::SVector{2,T}
     size::Int
     grid::Vector{T}
@@ -83,22 +85,11 @@ struct BaryCheb{T<:AbstractFloat} <: AbstractGrid{T}
     end
 end
 
-function Base.floor(grid::BaryCheb{T}, x) where {T}
-    if x <= grid.grid[1]
-        return 1
-    elseif x >= grid.grid[end]
-        return grid.size-1
-    end
-
-    result = searchsortedfirst(grid.grid, x)-1
-    return result
-end
-
 Base.getindex(grid::BaryCheb, i) = grid.grid[i]
 Base.firstindex(grid::BaryCheb) = 1
 Base.lastindex(grid::BaryCheb) = grid.size
 
-struct GaussLegendre{T<:AbstractFloat} <: AbstractGrid{T}
+struct GaussLegendre{T<:AbstractFloat} <: OpenGrid
     bound::SVector{2,T}
     size::Int
     grid::Vector{T}
@@ -116,22 +107,11 @@ struct GaussLegendre{T<:AbstractFloat} <: AbstractGrid{T}
     end
 end
 
-function Base.floor(grid::GaussLegendre{T}, x) where {T}
-    if x <= grid.grid[1]
-        return 1
-    elseif x >= grid.grid[end]
-        return grid.size-1
-    end
-
-    result = searchsortedfirst(grid.grid, x)-1
-    return result
-end
-
 Base.getindex(grid::GaussLegendre, i) = grid.grid[i]
 Base.firstindex(grid::GaussLegendre) = 1
 Base.lastindex(grid::GaussLegendre) = grid.size
 
-struct Log{T<:AbstractFloat} <: AbstractGrid{T}
+struct Log{T<:AbstractFloat} <: ClosedGrid
     bound::SVector{2,T}
     size::Int
     grid::Vector{T}
@@ -145,17 +125,16 @@ struct Log{T<:AbstractFloat} <: AbstractGrid{T}
         λ = (minterval/(bound[2]-bound[1]))^(1.0/M)
 
         if d2s
-            grid[1] = bound[1]
-            for i in 1:M+1
+            for i in 1:M
                 grid[i+1] = bound[1] + (bound[2]-bound[1])*λ^(M+1-i)
             end
         else
-            grid[end] = bound[2]
-            for i in 1:M+1
-                grid[i] = bound[2] - (bound[2]-bound[1])*λ^(i)
+            for i in 2:M+1
+                grid[i] = bound[2] - (bound[2]-bound[1])*λ^(i-1)
             end
         end
-
+        grid[1] = bound[1]
+        grid[end] = bound[2]
         return new{T}(bound, N, grid, λ, d2s)
     end
 end
@@ -180,11 +159,11 @@ function Base.floor(grid::Log{T}, x) where {T}
         if i > grid.size-2
             result = grid.size-1
         else
-            result = i
+            result = i+1
         end
     end
 
-    return result
+    return Base.floor(Int, result)
 end
 
 Base.getindex(grid::Log, i) = grid.grid[i]

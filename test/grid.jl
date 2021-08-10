@@ -116,7 +116,7 @@
     end
 
     @testset "LogGrid" begin
-        loggrid = SimpleGrid.Log{Float64}([0.0, 1.0], 6, 0.001,false )
+        loggrid = SimpleGrid.Log{Float64}([0.0, 1.0], 6, 0.001, true )
         println(loggrid.grid)
         @test floor(loggrid, 0.0) == 1
         @test floor(loggrid, loggrid[1]) == 1
@@ -128,8 +128,8 @@
         @test floor(loggrid, loggrid[end]) == loggrid.size-1
         @test floor(loggrid, 1.0) == loggrid.size-1
 
-        #loggrid = Grid.Log{Float64,2}(0.0, 1.0, (true, true))
         loggrid = SimpleGrid.Log{Float64}([0.0, 1.0], 6, 0.001,false )
+        println(loggrid.grid)
         @test floor(loggrid, 0.0) == 1
         @test floor(loggrid, loggrid[1]) == 1
 
@@ -157,9 +157,9 @@ end
     end
 
     @testset "Composite" begin
-        uniform = SimpleGrid.Uniform{Float64}([0.0, 2.0], 3)
-        gauss1 = SimpleGrid.GaussLegendre{Float64}([0.0, 1.0], 4)
-        gauss2 = SimpleGrid.GaussLegendre{Float64}([1.0, 2.0], 4)
+        uniform = SimpleGrid.Uniform{Float64}([0.0, 1.0], 3)
+        gauss1 = SimpleGrid.GaussLegendre{Float64}([0.0, 0.5], 4)
+        gauss2 = SimpleGrid.GaussLegendre{Float64}([0.5, 1.0], 4)
         comp = CompositeGrid.Composite{
             Float64,
             SimpleGrid.Uniform{Float64},
@@ -168,8 +168,50 @@ end
 
         println(comp.grid)
         println(comp.inits)
+
+        @test floor(comp, 0.0) == 1
+        @test floor(comp, comp[1]) == 1
+
+        δ = 1.0e-12
+        check(comp, 2:comp.size - 1, δ, 0)
+        check(comp, 2:comp.size - 1, -δ, -1)
+
+        @test floor(comp, comp[end]) == comp.size-1
+        @test floor(comp, 1.0) == comp.size-1
+
     end
 
+    @testset "CompositeLog" begin
+
+        comp = CompositeGrid.CompositeLogGrid(:cheb, [0.0,1.0],4,0.001,true,4)
+        println(comp.grid)
+        println(comp.inits)
+
+        @test floor(comp, 0.0) == 1
+        @test floor(comp, comp[1]) == 1
+
+        δ = 1.0e-12
+        check(comp, 2:comp.size - 1, δ, 0)
+        check(comp, 2:comp.size - 1, -δ, -1)
+
+        @test floor(comp, comp[end]) == comp.size-1
+        @test floor(comp, 1.0) == comp.size-1
+
+        comp = CompositeGrid.LogDensedGrid(:uniform, [0.0,1.0], [0.2, 0.7],4,0.001,4)
+        println(comp.grid)
+        println(comp.inits)
+
+        @test floor(comp, 0.0) == 1
+        @test floor(comp, comp[1]) == 1
+
+        δ = 1.0e-12
+        check(comp, 2:comp.size - 1, δ, 0)
+        check(comp, 2:comp.size - 1, -δ, -1)
+
+        @test floor(comp, comp[end]) == comp.size-1
+        @test floor(comp, 1.0) == comp.size-1
+
+    end
 
 end
 
