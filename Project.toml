@@ -1,6 +1,6 @@
 name = "CompositeGrids"
 uuid = "b5136c89-beeb-4521-9139-60d2cac8be56"
-authors = ["Xiansheng Cai <iintsjds@gmail.com>"]
+authors = ["Xiansheng Cai <iintsjds@gmail.com> and contributors"]
 version = "0.1.0"
 
 [deps]
@@ -17,3 +17,9 @@ Quadmath = "0.5"
 FastGaussQuadrature = "0.4"
 StaticArrays = "1"
 julia = "1.4"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
