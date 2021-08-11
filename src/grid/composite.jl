@@ -2,11 +2,9 @@ module CompositeGrid
 
 export LogDensedGrid, Composite
 
-using StaticArrays, FastGaussQuadrature
-include("simple.jl")
-using .SimpleGrid
+using StaticArrays, FastGaussQuadrature, CompositeGrids
 
-struct Composite{T<:AbstractFloat,PG,SG} <: ClosedGrid
+struct Composite{T<:AbstractFloat,PG,SG} <: SimpleGrid.ClosedGrid
     bound::SVector{2,T}
     size::Int
     grid::Vector{T}
@@ -46,7 +44,7 @@ struct Composite{T<:AbstractFloat,PG,SG} <: ClosedGrid
 end
 
 function Base.floor(grid::Composite{T,PG,SG}, x) where {T,PG,SG}
-    if SG<:ClosedGrid
+    if SG<:SimpleGrid.ClosedGrid
         i = floor(grid.panel, x)
         return grid.inits[i]-1+floor(grid.subgrids[i],x)
     end
@@ -67,16 +65,16 @@ Base.lastindex(grid::Composite) = grid.size
 
 function CompositeLogGrid(type, bound, N, minterval, d2s, order, T=Float64)
     if type == :cheb
-        SubGridType = BaryCheb{T}
+        SubGridType = SimpleGrid.BaryCheb{T}
     elseif type == :gauss
-        SubGridType = GaussLegendre{T}
+        SubGridType = SimpleGrid.GaussLegendre{T}
     elseif type == :uniform
-        SubGridType = Uniform{T}
+        SubGridType = SimpleGrid.Uniform{T}
     else
         error("$type not implemented!")
     end
 
-    panel = Log{T}(bound, N, minterval, d2s)
+    panel = SimpleGrid.Log{T}(bound, N, minterval, d2s)
     #println("logpanel:",panel.grid)
     subgrids = Vector{SubGridType}([])
 
@@ -85,17 +83,17 @@ function CompositeLogGrid(type, bound, N, minterval, d2s, order, T=Float64)
         push!(subgrids, SubGridType(_bound,order))
     end
 
-    return Composite{T, Log{T},SubGridType}(panel,subgrids)
+    return Composite{T, SimpleGrid.Log{T},SubGridType}(panel,subgrids)
 
 end
 
 function LogDensedGrid(type, bound, dense_on, N, minterval, order, T=Float64)
     if type == :cheb
-        SubGridType = BaryCheb{T}
+        SubGridType = SimpleGrid.BaryCheb{T}
     elseif type == :gauss
-        SubGridType = GaussLegendre{T}
+        SubGridType = SimpleGrid.GaussLegendre{T}
     elseif type == :uniform
-        SubGridType = Uniform{T}
+        SubGridType = SimpleGrid.Uniform{T}
     else
         error("$type not implemented!")
     end
@@ -161,15 +159,15 @@ function LogDensedGrid(type, bound, dense_on, N, minterval, order, T=Float64)
         push!(d2slist, true)
     end
 
-    panel = Arbitrary{T}(panelgrid)
+    panel = SimpleGrid.Arbitrary{T}(panelgrid)
     #println("panel:",panel.grid)
-    subgrids = Vector{Composite{T, Log{T}, SubGridType}}([])
+    subgrids = Vector{Composite{T, SimpleGrid.Log{T}, SubGridType}}([])
 
     for i in 1:length(panel.grid)-1
         push!(subgrids, CompositeLogGrid(type, [panel[i],panel[i+1]], N, minterval, d2slist[i], order))
     end
 
-    return Composite{T, Arbitrary{T},Composite{T, Log{T}, SubGridType}}(panel,subgrids)
+    return Composite{T, SimpleGrid.Arbitrary{T},Composite{T, SimpleGrid.Log{T}, SubGridType}}(panel,subgrids)
 
 end
 

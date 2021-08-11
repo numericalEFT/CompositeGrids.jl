@@ -14,11 +14,22 @@ struct Arbitrary{T<:AbstractFloat} <: ClosedGrid
     bound::SVector{2,T}
     size::Int
     grid::Vector{T}
+    weight::Vector{T}
 
     function Arbitrary{T}(grid) where {T<:AbstractFloat}
         bound = [grid[1],grid[end]]
         size = length(grid)
-        return new{T}(bound, size, grid)
+        weight = similar(grid)
+        for i in 1:size
+            if i==1
+                weight[1] = 0.5*(grid[2]-grid[1])
+            elseif i==size
+                weight[end] = 0.5*(grid[end]-grid[end-1])
+            else
+                weight[i] = 0.5*(grid[i+1]-grid[i-1])
+            end
+        end
+        return new{T}(bound, size, grid, weight)
     end
 end
 
@@ -41,13 +52,23 @@ struct Uniform{T<:AbstractFloat} <: ClosedGrid
     bound::SVector{2,T}
     size::Int
     grid::Vector{T}
+    weight::Vector{T}
 
     function Uniform{T}(bound, N) where {T<:AbstractFloat}
         Ntot = N - 1
         interval = (bound[2]-bound[1])/Ntot
         grid = bound[1] .+ Vector(1:N) .* interval .- ( interval )
-
-        return new{T}(bound, N, grid)
+        weight = similar(grid)
+        for i in 1:N
+            if i==1
+                weight[1] = 0.5*(grid[2]-grid[1])
+            elseif i==N
+                weight[end] = 0.5*(grid[end]-grid[end-1])
+            else
+                weight[i] = 0.5*(grid[i+1]-grid[i-1])
+            end
+        end
+        return new{T}(bound, N, grid, weight)
     end
 end
 
@@ -115,6 +136,7 @@ struct Log{T<:AbstractFloat} <: ClosedGrid
     bound::SVector{2,T}
     size::Int
     grid::Vector{T}
+    weight::Vector{T}
 
     λ::T
     d2s::Bool
@@ -135,7 +157,18 @@ struct Log{T<:AbstractFloat} <: ClosedGrid
         end
         grid[1] = bound[1]
         grid[end] = bound[2]
-        return new{T}(bound, N, grid, λ, d2s)
+        weight = similar(grid)
+        for i in 1:N
+            if i==1
+                weight[1] = 0.5*(grid[2]-grid[1])
+            elseif i==N
+                weight[end] = 0.5*(grid[end]-grid[end-1])
+            else
+                weight[i] = 0.5*(grid[i+1]-grid[i-1])
+            end
+        end
+
+        return new{T}(bound, N, grid,weight, λ, d2s)
     end
 end
 

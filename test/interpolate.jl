@@ -90,7 +90,7 @@
     end
 
     @testset "DensedLog" begin
-        β = π
+        β = 4
         tgrid = CompositeGrid.LogDensedGrid(:cheb, [0.0, β], [0.0, 0.5β, β], 4, 0.001, 4)
         # tugrid = Grid.Uniform{Float64,33}(0.0, β, (true, true))
         # kugrid = Grid.Uniform{Float64,33}(0.0, maxK, (true, true))
@@ -125,8 +125,10 @@
         @test abs(f(t) - fbar) < 3.e-6 # linear interpolation, so error is δK+δt
 
         tlist = rand(10) * β
+        tlist = sort(tlist)
+        println(tlist)
         ff = Interp.interpGrid(data, tgrid, tlist)
-        # println(tlist)
+        
 
         for (ti, t) in enumerate(tlist)
             fbar = Interp.interp1D(data, tgrid, t)
@@ -136,5 +138,35 @@
         end
     end
 
+    @testset "Integrate" begin
+        β = 1.0
+        tgrid = SimpleGrid.GaussLegendre{Float64}([0.0, β], 4)
+        # tugrid = Grid.Uniform{Float64,33}(0.0, β, (true, true))
+        # kugrid = Grid.Uniform{Float64,33}(0.0, maxK, (true, true))
+        f(t) = t
+        data = zeros(tgrid.size)
+        for (ti, t) in enumerate(tgrid.grid)
+            data[ti] = f(t)
+        end
+        println(tgrid.grid)
+        println(data)
+        println(tgrid.weight)
+        println(sum(data.*tgrid.weight))
+        int_result = Interp.integrate1D(data, tgrid)
+        @test abs(int_result - 0.5) < 3.e-6
+
+        β = 1.0
+        tgrid = CompositeGrid.LogDensedGrid(:gauss, [0.0, β], [0.0, 0.5β, β], 2, 0.001, 3)
+        # tugrid = Grid.Uniform{Float64,33}(0.0, β, (true, true))
+        # kugrid = Grid.Uniform{Float64,33}(0.0, maxK, (true, true))
+        data = zeros(tgrid.size)
+        for (ti, t) in enumerate(tgrid.grid)
+            data[ti] = f(t)
+        end
+        println(tgrid.grid)
+        println(data)
+        int_result = Interp.integrate1D(data, tgrid)
+        @test abs(int_result - 0.5) < 3.e-6
+    end
 end
 
