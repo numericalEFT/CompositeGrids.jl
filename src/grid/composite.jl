@@ -1,8 +1,29 @@
+"""
+Composite grid that has tree structure. The whole interval is first divided by a panel grid,
+then each interval of a panel grid is divided by a smaller grid in subgrids. Subgrid could also be
+composite grid.
+"""
 module CompositeGrid
 
 export LogDensedGrid, Composite
 
 using StaticArrays, FastGaussQuadrature, CompositeGrids
+
+
+"""
+struct Composite{T<:AbstractFloat,PG,SG} <: SimpleGrid.ClosedGrid
+
+    Composite grid generated with panel grid of type PG and subgrids of type SG.
+PG should always be ClosedGrid, while SG could be any grid.
+
+#Members:
+- `bound` : boundary of the grid
+- `size` : number of grid points
+- `grid` : grid points
+- `panel` : panel grid
+- `subgrids` : a vector of subgrids
+- `inits` : index of the first grid point of a subgrid on the whole grid
+"""
 
 struct Composite{T<:AbstractFloat,PG,SG} <: SimpleGrid.ClosedGrid
     bound::SVector{2,T}
@@ -13,6 +34,14 @@ struct Composite{T<:AbstractFloat,PG,SG} <: SimpleGrid.ClosedGrid
     panel::PG
     subgrids::Vector{SG}
     inits::Vector{Int}
+
+    """
+    function Composite{T,PG,SG}(panel, subgrids) where {T<:AbstractFloat,PG,SG}
+
+        create Composite grid from panel and subgrids.
+    if the boundary grid point of two neighbor subgrids are too close, they will be combined
+    in the whole grid.
+    """
 
     function Composite{T,PG,SG}(panel, subgrids) where {T<:AbstractFloat,PG,SG}
         bound = [panel[1], panel[end]]
@@ -43,6 +72,18 @@ struct Composite{T<:AbstractFloat,PG,SG} <: SimpleGrid.ClosedGrid
 
 end
 
+
+"""
+function Base.floor(grid::Composite{T,PG,SG}, x) where {T,PG,SG}
+
+    first find the corresponding subgrid by flooring on panel grid,
+then floor on subgrid and collect result.
+    give the floor result on the whole grid.
+    if floor on panel grid is needed, simply call floor(grid.panel, x).
+
+    return 1 for x<grid[1] and grid.size-1 for x>grid[end].
+"""
+
 function Base.floor(grid::Composite{T,PG,SG}, x) where {T,PG,SG}
     if SG<:SimpleGrid.ClosedGrid
         i = floor(grid.panel, x)
@@ -62,6 +103,20 @@ end
 Base.getindex(grid::Composite, i) = grid.grid[i]
 Base.firstindex(grid::Composite) = 1
 Base.lastindex(grid::Composite) = grid.size
+
+"""
+function CompositeLogGrid(type, bound, N, minterval, d2s, order, T=Float64)
+
+    create a composite grid with a Log grid as panel and subgrids of selected type.
+
+#Members:
+- `type` : type of the subgrids, currently in [:cheb, :gauss, :uniform]
+- `bound` : boundary of the grid
+- `N` : number of grid points of panel grid
+- `minterval` : minimum interval of panel grid
+- `d2s` : panel grid is dense to sparse or not
+- `order` : number of grid points of subgrid
+"""
 
 function CompositeLogGrid(type, bound, N, minterval, d2s, order, T=Float64)
     if type == :cheb
@@ -87,7 +142,24 @@ function CompositeLogGrid(type, bound, N, minterval, d2s, order, T=Float64)
 
 end
 
-function LogDensedGrid(type, bound, dense_on, N, minterval, order, T=Float64)
+"""
+function LogDensedGrid(type, bound, dense_at, N, minterval, order, T=Float64)
+
+    create a composite grid of CompositeLogGrid as subgrids.
+    the grid is densed at selected points in dense_at, which in the real situation
+could be [kF,] for fermi k grid and [0, 2kF] for bose k grid, etc.
+    if two densed point is too close to each other, they will be combined.
+    
+#Members:
+- `type` : type of the subgrid of subgrid, currently in [:cheb, :gauss, :uniform]
+- `bound` : boundary of the grid
+- `dense_at` : list of points that requires densed grid
+- `N` : number of grid points of panel grid
+- `minterval` : minimum interval of panel grid
+- `order` : number of grid points of subgrid
+"""
+
+function LogDensedGrid(type, bound, dense_at, N, minterval, order, T=Float64)
     if type == :cheb
         SubGridType = SimpleGrid.BaryCheb{T}
     elseif type == :gauss
@@ -98,37 +170,37 @@ function LogDensedGrid(type, bound, dense_on, N, minterval, order, T=Float64)
         error("$type not implemented!")
     end
 
-    dense_on = sort(dense_on)
-    @assert bound[1]<=dense_on[1]<dense_on[end]<=bound[2]
+    dense_at = sort(dense_at)
+    @assert bound[1]<=dense_at[1]<dense_at[end]<=bound[2]
     dp = Vector{T}([])
-    for i in 1:length(dense_on)
+    for i in 1:length(dense_at)
         if i==1
-            if abs(dense_on[i]-bound[1])<minterval
+            if abs(dense_at[i]-bound[1])<minterval
                 push!(dp, bound[1])
             else
-                push!(dp, dense_on[i])
+                push!(dp, dense_at[i])
             end
-        elseif i != length(dense_on)
-            if abs(dense_on[i]-dp[end])<minterval
+        elseif i != length(dense_at)
+            if abs(dense_at[i]-dp[end])<minterval
                 if dp[end] != bound[1]
-                    dp[end] = (dense_on[i]+dense_on[i-1])/2.0
+                    dp[end] = (dense_at[i]+dense_at[i-1])/2.0
                 end
             else
-                push!(dp, dense_on[i])
+                push!(dp, dense_at[i])
             end
         else
-            if abs(dense_on[i]-bound[2])<minterval
+            if abs(dense_at[i]-bound[2])<minterval
                 if abs(dp[end]-bound[2])<minterval
                     dp[end]=bound[2]
                 else
                     push!(dp, bound[2])
                 end
-            elseif abs(dense_on[i]-dp[end])<minterval
+            elseif abs(dense_at[i]-dp[end])<minterval
                 if dp[end] != bound[1]
-                    dp[end] = (dense_on[i]+dense_on[i-1])/2.0
+                    dp[end] = (dense_at[i]+dense_at[i-1])/2.0
                 end
             else
-                push!(dp, dense_on[i])
+                push!(dp, dense_at[i])
             end
         end
     end

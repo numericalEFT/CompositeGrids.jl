@@ -1,8 +1,12 @@
+"""
+Provide interpolation and integration.
+"""
+
 module Interp
 
 using StaticArrays, FastGaussQuadrature, CompositeGrids
 
-include("chebyshev.jl")
+#include("chebyshev.jl")
 
 # include("simple.jl")
 # using .SimpleGrid
@@ -19,7 +23,7 @@ InterpStyle(::Type{<:SimpleGrid.BaryCheb}) = ChebInterp()
 InterpStyle(::Type{<:CompositeGrid.Composite}) = CompositeInterp()
 
 """
-   linear1D(data,xgrid, x) 
+    function linear1D(data, xgrid, x)
 
 linear interpolation of data(x)
 
@@ -55,17 +59,62 @@ linear interpolation of data(x)
     return gx
 end
 
+"""
+    function interp1D(data, xgrid, x)
+
+linear interpolation of data(x)
+
+#Arguments:
+- xgrid: one-dimensional grid of x
+- data: one-dimensional array of data
+- x: x
+"""
+
 function interp1D(data, xgrid::T, x) where {T}
     interp1D(InterpStyle(T), data, xgrid, x)
 end
+
+"""
+    function interp1D(::FloorInterp,data, xgrid, x)
+
+linear interpolation of data(x), use floor and linear1D
+
+#Arguments:
+- xgrid: one-dimensional grid of x
+- data: one-dimensional array of data
+- x: x
+"""
 
 function interp1D(::FloorInterp,data, xgrid, x)
     return linear1D(data, xgrid, x)
 end
 
+"""
+    function interp1D(::ChebInterp, data, xgrid, x)
+
+linear interpolation of data(x), barycheb for BaryCheb grid
+
+#Arguments:
+- xgrid: one-dimensional grid of x
+- data: one-dimensional array of data
+- x: x
+"""
+
 function interp1D(::ChebInterp, data, xgrid, x)
-    return barycheb(xgrid.size, x, data, xgrid.weight, xgrid.grid)
+    return SimpleGrid.barycheb(xgrid.size, x, data, xgrid.weight, xgrid.grid)
 end
+
+"""
+    function interp1D(::CompositeInterp,data, xgrid, x)
+
+linear interpolation of data(x),
+first floor on panel to find subgrid, then call interp1D on subgrid 
+
+#Arguments:
+- xgrid: one-dimensional grid of x
+- data: one-dimensional array of data
+- x: x
+"""
 
 function interp1D(::CompositeInterp,data, xgrid, x)
     i = floor(xgrid.panel, x)
@@ -73,9 +122,33 @@ function interp1D(::CompositeInterp,data, xgrid, x)
     return interp1D(data[head:tail], xgrid.subgrids[i], x)
 end
 
+
+"""
+    function interpGrid(data, xgrid, grid)
+
+linear interpolation of data(grid[1:end]), return a Vector
+
+#Arguments:
+- xgrid: one-dimensional grid of x
+- data: one-dimensional array of data
+- grid: points to be interpolated on
+"""
+
 function interpGrid(data, xgrid::T, grid) where {T}
     interpGrid(InterpStyle(T), data, xgrid, grid)
 end
+
+"""
+    function interpGrid(::Union{FloorInterp,ChebInterp}, data, xgrid, grid)
+
+linear interpolation of data(grid[1:end]), return a Vector
+simply call interp1D on each points
+
+#Arguments:
+- xgrid: one-dimensional grid of x
+- data: one-dimensional array of data
+- grid: points to be interpolated on
+"""
 
 function interpGrid(::Union{FloorInterp,ChebInterp}, data, xgrid, grid)
     ff = zeros(eltype(data), length(grid))
@@ -84,6 +157,18 @@ function interpGrid(::Union{FloorInterp,ChebInterp}, data, xgrid, grid)
     end
     return ff
 end
+
+"""
+    function interpGrid(::CompositeInterp, data, xgrid, grid)
+
+linear interpolation of data(grid[1:end]), return a Vector
+grid should be sorted.
+
+#Arguments:
+- xgrid: one-dimensional grid of x
+- data: one-dimensional array of data
+- grid: points to be interpolated on
+"""
 
 function interpGrid(::CompositeInterp, data, xgrid, grid)
     ff = zeros(eltype(data), length(grid))
@@ -122,9 +207,31 @@ IntegrateStyle(::Type{<:SimpleGrid.Arbitrary}) = WeightIntegrate()
 IntegrateStyle(::Type{<:SimpleGrid.Log}) = WeightIntegrate()
 IntegrateStyle(::Type{<:CompositeGrid.Composite}) = CompositeIntegrate()
 
+
+"""
+    function integrate1D(data, xgrid)
+
+calculate integration of data[i] on xgrid
+
+#Arguments:
+- xgrid: one-dimensional grid of x
+- data: one-dimensional array of data
+"""
+
 function integrate1D(data, xgrid::T) where {T}
     return integrate1D(IntegrateStyle(T), data, xgrid)
 end
+
+"""
+    function integrate1D(::NoIntegrate, data, xgrid)
+
+calculate integration of data[i] on xgrid
+works for grids that do not have integration weight stored
+
+#Arguments:
+- xgrid: one-dimensional grid of x
+- data: one-dimensional array of data
+"""
 
 function integrate1D(::NoIntegrate, data, xgrid)
     return 0.0
@@ -144,6 +251,17 @@ function integrate1D(::NoIntegrate, data, xgrid)
     return result
 end
 
+"""
+    function integrate1D(::WeightIntegrate, data, xgrid)
+
+calculate integration of data[i] on xgrid
+works for grids that have integration weight stored
+
+#Arguments:
+- xgrid: one-dimensional grid of x
+- data: one-dimensional array of data
+"""
+
 function integrate1D(::WeightIntegrate, data, xgrid)
     result = eltype(data)(0.0)
 
@@ -152,6 +270,17 @@ function integrate1D(::WeightIntegrate, data, xgrid)
     end
     return result
 end
+
+"""
+    function integrate1D(::CompositeIntegrate, data, xgrid)
+
+calculate integration of data[i] on xgrid
+call integrate1D for each subgrid and return the sum.
+
+#Arguments:
+- xgrid: one-dimensional grid of x
+- data: one-dimensional array of data
+"""
 
 function integrate1D(::CompositeIntegrate, data, xgrid)
     result = eltype(data)(0.0)
