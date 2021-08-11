@@ -24,7 +24,6 @@ PG should always be ClosedGrid, while SG could be any grid.
 - `subgrids` : a vector of subgrids
 - `inits` : index of the first grid point of a subgrid on the whole grid
 """
-
 struct Composite{T<:AbstractFloat,PG,SG} <: SimpleGrid.ClosedGrid
     bound::SVector{2,T}
     size::Int
@@ -42,7 +41,6 @@ struct Composite{T<:AbstractFloat,PG,SG} <: SimpleGrid.ClosedGrid
     if the boundary grid point of two neighbor subgrids are too close, they will be combined
     in the whole grid.
     """
-
     function Composite{T,PG,SG}(panel, subgrids) where {T<:AbstractFloat,PG,SG}
         bound = [panel[1], panel[end]]
         @assert panel.size-1==length(subgrids)
@@ -83,7 +81,6 @@ then floor on subgrid and collect result.
 
     return 1 for x<grid[1] and grid.size-1 for x>grid[end].
 """
-
 function Base.floor(grid::Composite{T,PG,SG}, x) where {T,PG,SG}
     if SG<:SimpleGrid.ClosedGrid
         i = floor(grid.panel, x)
@@ -117,7 +114,6 @@ function CompositeLogGrid(type, bound, N, minterval, d2s, order, T=Float64)
 - `d2s` : panel grid is dense to sparse or not
 - `order` : number of grid points of subgrid
 """
-
 function CompositeLogGrid(type, bound, N, minterval, d2s, order, T=Float64)
     if type == :cheb
         SubGridType = SimpleGrid.BaryCheb{T}
@@ -158,7 +154,6 @@ could be [kF,] for fermi k grid and [0, 2kF] for bose k grid, etc.
 - `minterval` : minimum interval of panel grid
 - `order` : number of grid points of subgrid
 """
-
 function LogDensedGrid(type, bound, dense_at, N, minterval, order, T=Float64)
     if type == :cheb
         SubGridType = SimpleGrid.BaryCheb{T}

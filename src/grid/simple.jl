@@ -3,8 +3,6 @@ Basic grids including common grids like arbitrary grids, uniform grids, log grid
 and optimized grids like barycheb for interpolation and gausslegendre for integration.
 
 """
-
-
 module SimpleGrid
 
 export AbstractGrid, OpenGrid, ClosedGrid, Uniform, BaryCheb, GaussLegendre, Arbitrary, Log
@@ -18,7 +16,6 @@ export barychebinit, barycheb
 All Grids are derived from AbstractGrid; ClosedGrid has bound[1], bound[2] == grid[1], grid[end],
 while OpenGrid has bound[1]<grid[1]<grid[end]<bound[2]
 """
-
 abstract type AbstractGrid end
 abstract type OpenGrid <: AbstractGrid end
 abstract type ClosedGrid <: AbstractGrid end
@@ -36,7 +33,6 @@ struct Arbitrary{T<:AbstractFloat} <: ClosedGrid
 - `grid` : grid points
 - `weight` : integration weight
 """
-
 struct Arbitrary{T<:AbstractFloat} <: ClosedGrid
     bound::SVector{2,T}
     size::Int
@@ -48,7 +44,6 @@ struct Arbitrary{T<:AbstractFloat} <: ClosedGrid
 
         create Arbitrary from grid.
     """
-
     function Arbitrary{T}(grid) where {T<:AbstractFloat}
         bound = [grid[1],grid[end]]
         size = length(grid)
@@ -74,7 +69,6 @@ grid point smaller than x.
 
     return 1 for x<grid[1] and grid.size-1 for x>grid[end].
 """
-
 function Base.floor(grid::AbstractGrid, x) #where {T}
     if x <= grid.grid[1]
         return 1
@@ -102,7 +96,6 @@ struct Uniform{T<:AbstractFloat} <: ClosedGrid
 - `grid` : grid points
 - `weight` : integration weight
 """
-
 struct Uniform{T<:AbstractFloat} <: ClosedGrid
     bound::SVector{2,T}
     size::Int
@@ -114,7 +107,6 @@ struct Uniform{T<:AbstractFloat} <: ClosedGrid
 
         create Uniform grid.
     """
-
     function Uniform{T}(bound, N) where {T<:AbstractFloat}
         Ntot = N - 1
         interval = (bound[2]-bound[1])/Ntot
@@ -141,7 +133,6 @@ grid point smaller than x.
 
     return 1 for x<grid[1] and grid.size-1 for x>grid[end].
 """
-
 function Base.floor(grid::Uniform{T}, x) where {T}
     result = (x-grid.grid[1])/(grid.grid[end]-grid.grid[1])*(grid.size-1)+1
     if result <=0
@@ -170,7 +161,6 @@ struct BaryCheb{T<:AbstractFloat} <: OpenGrid
 - `grid` : grid points
 - `weight` : interpolation weight
 """
-
 struct BaryCheb{T<:AbstractFloat} <: OpenGrid
     bound::SVector{2,T}
     size::Int
@@ -182,7 +172,6 @@ struct BaryCheb{T<:AbstractFloat} <: OpenGrid
 
         create BaryCheb grid.
     """
-
     function BaryCheb{T}(bound, N) where {T<:AbstractFloat}
         order = N
         x, w =barychebinit(order)
@@ -210,7 +199,6 @@ struct GaussLegendre{T<:AbstractFloat} <: OpenGrid
 - `grid` : grid points
 - `weight` : integration weight
 """
-
 struct GaussLegendre{T<:AbstractFloat} <: OpenGrid
     bound::SVector{2,T}
     size::Int
@@ -222,7 +210,6 @@ struct GaussLegendre{T<:AbstractFloat} <: OpenGrid
 
         create GaussLegendre grid.
     """
-
     function GaussLegendre{T}(bound, N) where {T<:AbstractFloat}
         order = N
         x, w = gausslegendre(order)
@@ -258,7 +245,6 @@ On [0, 1], a typical d2s Log grid looks like
 - `d2s` : dense to sparse or not
 
 """
-
 struct Log{T<:AbstractFloat} <: ClosedGrid
     bound::SVector{2,T}
     size::Int
@@ -273,7 +259,6 @@ struct Log{T<:AbstractFloat} <: ClosedGrid
 
         create Log grid.
     """
-
     function Log{T}(bound, N, minterval, d2s) where {T<:AbstractFloat}
         grid = zeros(T, N)
         M = N-2
@@ -314,7 +299,6 @@ grid point smaller than x.
 
     return 1 for x<grid[1] and grid.size-1 for x>grid[end].
 """
-
 function Base.floor(grid::Log{T}, x) where {T}
     if x <= grid.grid[1]
         return 1
