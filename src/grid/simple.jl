@@ -23,9 +23,9 @@ abstract type ClosedGrid <: AbstractGrid end
 
 """
 
-struct Arbitrary{T<:AbstractFloat} <: ClosedGrid
+    struct Arbitrary{T<:AbstractFloat} <: ClosedGrid
 
-    Arbitrary grid generated from given sorted grid.
+Arbitrary grid generated from given sorted grid.
 
 #Members:
 - `bound` : boundary of the grid
@@ -40,9 +40,9 @@ struct Arbitrary{T<:AbstractFloat} <: ClosedGrid
     weight::Vector{T}
 
     """
-    function Arbitrary{T}(grid) where {T<:AbstractFloat}
+        function Arbitrary{T}(grid) where {T<:AbstractFloat}
 
-        create Arbitrary from grid.
+    create Arbitrary from grid.
     """
     function Arbitrary{T}(grid) where {T<:AbstractFloat}
         bound = [grid[1],grid[end]]
@@ -62,12 +62,12 @@ struct Arbitrary{T<:AbstractFloat} <: ClosedGrid
 end
 
 """
-function Base.floor(grid::AbstractGrid, x) #where {T}
+    function Base.floor(grid::AbstractGrid, x) #where {T}
 
-    use basic searchsorted function to find the index of largest
+use basic searchsorted function to find the index of largest
 grid point smaller than x.
 
-    return 1 for x<grid[1] and grid.size-1 for x>grid[end].
+return 1 for x<grid[1] and grid.size-1 for x>grid[end].
 """
 function Base.floor(grid::AbstractGrid, x) #where {T}
     if x <= grid.grid[1]
@@ -86,9 +86,9 @@ Base.lastindex(grid::Arbitrary) = grid.size
 
 
 """
-struct Uniform{T<:AbstractFloat} <: ClosedGrid
+    struct Uniform{T<:AbstractFloat} <: ClosedGrid
 
-    Uniform grid generated on [bound[1], bound[2]] with N points
+Uniform grid generated on [bound[1], bound[2]] with N points
 
 #Members:
 - `bound` : boundary of the grid
@@ -103,9 +103,9 @@ struct Uniform{T<:AbstractFloat} <: ClosedGrid
     weight::Vector{T}
 
     """
-    function Uniform{T}(bound, N) where {T<:AbstractFloat}
+        function Uniform{T}(bound, N) where {T<:AbstractFloat}
 
-        create Uniform grid.
+    create Uniform grid.
     """
     function Uniform{T}(bound, N) where {T<:AbstractFloat}
         Ntot = N - 1
@@ -126,12 +126,12 @@ struct Uniform{T<:AbstractFloat} <: ClosedGrid
 end
 
 """
-function Base.floor(grid::Uniform{T}, x) where {T}
+    function Base.floor(grid::Uniform{T}, x) where {T}
 
-    find the index of largest
+find the index of largest
 grid point smaller than x.
 
-    return 1 for x<grid[1] and grid.size-1 for x>grid[end].
+return 1 for x<grid[1] and grid.size-1 for x>grid[end].
 """
 function Base.floor(grid::Uniform{T}, x) where {T}
     result = (x-grid.grid[1])/(grid.grid[end]-grid.grid[1])*(grid.size-1)+1
@@ -151,9 +151,9 @@ Base.lastindex(grid::Uniform) = grid.size
 
 
 """
-struct BaryCheb{T<:AbstractFloat} <: OpenGrid
+    struct BaryCheb{T<:AbstractFloat} <: OpenGrid
 
-    BaryCheb grid generated on [bound[1], bound[2]] with order N.
+BaryCheb grid generated on [bound[1], bound[2]] with order N.
 
 #Members:
 - `bound` : boundary of the grid
@@ -168,9 +168,9 @@ struct BaryCheb{T<:AbstractFloat} <: OpenGrid
     weight::Vector{T}
 
     """
-    function BaryCheb{T}(bound, N) where {T<:AbstractFloat}
+        function BaryCheb{T}(bound, N) where {T<:AbstractFloat}
 
-        create BaryCheb grid.
+    create BaryCheb grid.
     """
     function BaryCheb{T}(bound, N) where {T<:AbstractFloat}
         order = N
@@ -189,9 +189,9 @@ Base.firstindex(grid::BaryCheb) = 1
 Base.lastindex(grid::BaryCheb) = grid.size
 
 """
-struct GaussLegendre{T<:AbstractFloat} <: OpenGrid
+    struct GaussLegendre{T<:AbstractFloat} <: OpenGrid
 
-    GaussLegendre grid generated on [bound[1], bound[2]] with order N.
+GaussLegendre grid generated on [bound[1], bound[2]] with order N.
 
 #Members:
 - `bound` : boundary of the grid
@@ -206,9 +206,9 @@ struct GaussLegendre{T<:AbstractFloat} <: OpenGrid
     weight::Vector{T}
 
     """
-    function GaussLegendre{T}(bound, N) where {T<:AbstractFloat}
+        function GaussLegendre{T}(bound, N) where {T<:AbstractFloat}
 
-        create GaussLegendre grid.
+    create GaussLegendre grid.
     """
     function GaussLegendre{T}(bound, N) where {T<:AbstractFloat}
         order = N
@@ -227,9 +227,9 @@ Base.firstindex(grid::GaussLegendre) = 1
 Base.lastindex(grid::GaussLegendre) = grid.size
 
 """
-struct Log{T<:AbstractFloat} <: ClosedGrid
+    struct Log{T<:AbstractFloat} <: ClosedGrid
 
-    Log grid generated on [bound[1], bound[2]] with N grid points.
+Log grid generated on [bound[1], bound[2]] with N grid points.
 Minimal interval is set to be minterval. Dense to sparse if d2s, vice versa.
 
 On [0, 1], a typical d2s Log grid looks like
@@ -255,9 +255,9 @@ struct Log{T<:AbstractFloat} <: ClosedGrid
     d2s::Bool
 
     """
-    function Log{T}(bound, N, minterval, d2s) where {T<:AbstractFloat}
+        function Log{T}(bound, N, minterval, d2s) where {T<:AbstractFloat}
 
-        create Log grid.
+    create Log grid.
     """
     function Log{T}(bound, N, minterval, d2s) where {T<:AbstractFloat}
         grid = zeros(T, N)
@@ -292,12 +292,12 @@ end
 
 
 """
-function Base.floor(grid::Log{T}, x) where {T}
+    function Base.floor(grid::Log{T}, x) where {T}
 
-    find the index of largest
+find the index of largest
 grid point smaller than x.
 
-    return 1 for x<grid[1] and grid.size-1 for x>grid[end].
+return 1 for x<grid[1] and grid.size-1 for x>grid[end].
 """
 function Base.floor(grid::Log{T}, x) where {T}
     if x <= grid.grid[1]

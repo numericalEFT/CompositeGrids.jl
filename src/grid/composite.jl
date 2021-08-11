@@ -11,9 +11,9 @@ using StaticArrays, FastGaussQuadrature, CompositeGrids
 
 
 """
-struct Composite{T<:AbstractFloat,PG,SG} <: SimpleGrid.ClosedGrid
+    struct Composite{T<:AbstractFloat,PG,SG} <: SimpleGrid.ClosedGrid
 
-    Composite grid generated with panel grid of type PG and subgrids of type SG.
+Composite grid generated with panel grid of type PG and subgrids of type SG.
 PG should always be ClosedGrid, while SG could be any grid.
 
 #Members:
@@ -35,9 +35,9 @@ struct Composite{T<:AbstractFloat,PG,SG} <: SimpleGrid.ClosedGrid
     inits::Vector{Int}
 
     """
-    function Composite{T,PG,SG}(panel, subgrids) where {T<:AbstractFloat,PG,SG}
+        function Composite{T,PG,SG}(panel, subgrids) where {T<:AbstractFloat,PG,SG}
 
-        create Composite grid from panel and subgrids.
+    create Composite grid from panel and subgrids.
     if the boundary grid point of two neighbor subgrids are too close, they will be combined
     in the whole grid.
     """
@@ -72,14 +72,14 @@ end
 
 
 """
-function Base.floor(grid::Composite{T,PG,SG}, x) where {T,PG,SG}
+    function Base.floor(grid::Composite{T,PG,SG}, x) where {T,PG,SG}
 
-    first find the corresponding subgrid by flooring on panel grid,
+first find the corresponding subgrid by flooring on panel grid,
 then floor on subgrid and collect result.
-    give the floor result on the whole grid.
-    if floor on panel grid is needed, simply call floor(grid.panel, x).
+give the floor result on the whole grid.
+if floor on panel grid is needed, simply call floor(grid.panel, x).
 
-    return 1 for x<grid[1] and grid.size-1 for x>grid[end].
+return 1 for x<grid[1] and grid.size-1 for x>grid[end].
 """
 function Base.floor(grid::Composite{T,PG,SG}, x) where {T,PG,SG}
     if SG<:SimpleGrid.ClosedGrid
@@ -102,9 +102,9 @@ Base.firstindex(grid::Composite) = 1
 Base.lastindex(grid::Composite) = grid.size
 
 """
-function CompositeLogGrid(type, bound, N, minterval, d2s, order, T=Float64)
+    function CompositeLogGrid(type, bound, N, minterval, d2s, order, T=Float64)
 
-    create a composite grid with a Log grid as panel and subgrids of selected type.
+create a composite grid with a Log grid as panel and subgrids of selected type.
 
 #Members:
 - `type` : type of the subgrids, currently in [:cheb, :gauss, :uniform]
@@ -139,12 +139,12 @@ function CompositeLogGrid(type, bound, N, minterval, d2s, order, T=Float64)
 end
 
 """
-function LogDensedGrid(type, bound, dense_at, N, minterval, order, T=Float64)
+    function LogDensedGrid(type, bound, dense_at, N, minterval, order, T=Float64)
 
-    create a composite grid of CompositeLogGrid as subgrids.
-    the grid is densed at selected points in dense_at, which in the real situation
+create a composite grid of CompositeLogGrid as subgrids.
+the grid is densed at selected points in dense_at, which in the real situation
 could be [kF,] for fermi k grid and [0, 2kF] for bose k grid, etc.
-    if two densed point is too close to each other, they will be combined.
+if two densed point is too close to each other, they will be combined.
     
 #Members:
 - `type` : type of the subgrid of subgrid, currently in [:cheb, :gauss, :uniform]
