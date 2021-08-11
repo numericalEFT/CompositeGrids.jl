@@ -154,6 +154,10 @@ function interpGrid(::Union{FloorInterp,ChebInterp}, data, xgrid, grid)
     ff = zeros(eltype(data), length(grid))
     for (xi, x) in enumerate(grid)
         ff[xi] = interp1D(data, xgrid, x)
+        if x == 1.1386851268496132
+            println(xgrid.bound)
+            println(xgrid.grid)
+        end
     end
     return ff
 end
@@ -181,8 +185,11 @@ function interpGrid(::CompositeInterp, data, xgrid, grid)
                 curr += 1
             end
             if grid[curr]<xgrid.panel[pi+1] && curr==length(grid)
+                @assert xgrid.subgrids[pi].bound[1]<=grid[init]<=grid[curr]<=xgrid.subgrids[pi].bound[2]
                 ff[init:curr] = interpGrid(data[head:tail], xgrid.subgrids[pi], grid[init:curr])
+                return ff
             else
+                @assert xgrid.subgrids[pi].bound[1]<=grid[init]<=grid[curr-1]<=xgrid.subgrids[pi].bound[2]
                 ff[init:curr-1] = interpGrid(data[head:tail], xgrid.subgrids[pi], grid[init:curr-1])
             end
             # println(data[head:tail])

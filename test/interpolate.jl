@@ -128,14 +128,18 @@
         tlist = sort(tlist)
         println(tlist)
         ff = Interp.interpGrid(data, tgrid, tlist)
-        
+        ff_c = similar(ff)
 
         for (ti, t) in enumerate(tlist)
             fbar = Interp.interp1D(data, tgrid, t)
+            ff_c[ti] = fbar
             # println("$k, $t, $fbar, ", f(k, t))
             @test abs(f(t) - fbar) < 3.e-6 # linear interpolation, so error is δK+δt
             @test abs(f(t) - ff[ti]) < 3.e-6 # linear interpolation, so error is δK+δt
         end
+        # println(tgrid.grid)
+        # println("ff_c:",ff_c)
+        # println("ff:",ff)
     end
 
     @testset "Integrate" begin
