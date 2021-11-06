@@ -5,10 +5,9 @@ composite grid.
 """
 module CompositeGrid
 
-export LogDensedGrid, Composite
+export LogDensedGrid, Composite, denseindex
 
 using StaticArrays, FastGaussQuadrature, CompositeGrids
-
 
 """
     struct Composite{T<:AbstractFloat,PG,SG} <: SimpleGrid.ClosedGrid
@@ -100,6 +99,24 @@ end
 Base.getindex(grid::Composite, i) = grid.grid[i]
 Base.firstindex(grid::Composite) = 1
 Base.lastindex(grid::Composite) = grid.size
+
+@inline function denseindex(grid::Composite{T,PG,SG}) where {T,PG,SG}
+    if PG == SimpleGrid.Log{T}
+        return [(grid.panel.d2s) ? 1 : grid.size, ]
+    # elseif SG == SimpleGrid.Log{T}
+    #     println("in di",[([grid.inits[i]-1+SimpleGrid.denseindex(grid.subgrids[i]) for i in 1:grid.size]...)...])
+    #     return unique([([grid.inits[i]-1+SimpleGrid.denseindex(grid.subgrids[i]) for i in 1:grid.size]...)...])
+    else
+        # for i in 1:length(grid.subgrids)
+        #     println(grid.inits[i])
+        #     println(length(grid.subgrids[i].grid))
+        #     println(grid.subgrids[i].grid)
+        #     println(grid.subgrids[i].panel.grid)
+        #     println(denseindex(grid.subgrids[i]))
+        # end
+        return unique([([grid.inits[i] .- 1 .+ denseindex(grid.subgrids[i]) for i in 1:length(grid.subgrids)]...)...])
+    end
+end
 
 """
     function CompositeLogGrid(type, bound, N, minterval, d2s, order, T=Float64)
