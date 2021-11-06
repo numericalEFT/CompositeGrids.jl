@@ -22,6 +22,83 @@ InterpStyle(::Type{<:SimpleGrid.BaryCheb}) = ChebInterp()
 InterpStyle(::Type{<:CompositeGrid.Composite}) = CompositeInterp()
 
 """
+    function linearND(data, xgrids, xs)
+
+linear interpolation of data(xs)
+
+#Arguments:
+- xgrids: n-dimensional grids, xgrids[i] is a 1D grid
+- data: n-dimensional array of data
+- xs: list of x, x[i] corresponds to xgrids[i]
+"""
+function linearND(data, xgrids, xs)
+    function enumX(xs)
+        dim = length(xs)
+        result = ones(Float64, 2^dim)
+        for i in 1:2^dim
+            for j in 1:dim
+                result[i] *= xs[j]^digits(i-1,base=2,pad=dim)[j]
+            end
+        end
+        return result
+    end
+    function f(as, xs)
+        dim = length(xs)
+        result = 0.0
+        ex = enumX(xs)
+        for i in 1:2^dim
+            result += as[i]*ex[i]
+        end
+        return result
+    end
+
+    dim = length(xs)
+
+    # find grid points below and above xs
+    xis = zeros(Int, (dim, 2))
+    for i in 1:dim
+        xi0,xi1 = 0,0
+        x=xs[i]
+        if(x<=xgrids[i].grid[firstindex(xgrids[i])])
+            xi0=1
+            xi1=2
+        elseif(x>=xgrids[i].grid[lastindex(xgrids[i])])
+            xi0=lastindex(xgrid)-1
+            xi1=xi0+1
+        else
+            xi0=floor(xgrids[i],xs[i])
+            xi1=xi0+1
+        end
+        xis[i,1], xis[i,2] = xi0, xi1
+    end
+
+    # data value at nearby grid points
+    datas = [data[[xis[j , 1+digits(i-1,base=2,pad=dim)[j]]  for j in 1:dim]...] for i in 1:2^dim]
+    # datas = zeros(Float64, 2^dim)
+    # for i in 1:2^dim
+    #     datas[i] = data[[xis[j , 1+digits(i,base=2,pad=dim)[j]]  for j in 1:dim]...]
+    # end
+
+    # create x matrix
+    xmat = ones(Float64, (2^dim, 2^dim))
+    for i in 1:2^dim
+        ii = digits(i-1, base=2,pad=dim)
+        xxs = [xgrids[j][xis[j, 1+ii[j]]] for j in 1:dim]
+        xmat[:, i] = enumX(xxs)
+    end
+
+    xtran = copy(transpose(xmat))
+    as = xtran\datas
+    #println(xtran)
+    #println(as)
+    #println(xtran*as)
+    #println(datas)
+    #@assert xtran*as == datas "$(xtran*as), $(datas), $(xtran)"
+
+    return f(as, xs)
+end
+
+"""
     function linear1D(data, xgrid, x)
 
 linear interpolation of data(x)
