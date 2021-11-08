@@ -32,24 +32,26 @@ linear interpolation of data(xs)
 - xs: list of x, x[i] corresponds to xgrids[i]
 """
 function linearND(data, xgrids, xs)
-    function enumX(xs)
-        dim = length(xs)
-        result = ones(Float64, 2^dim)
-        for i in 1:2^dim
-            for j in 1:dim
-                result[i] *= xs[j]^digits(i-1,base=2,pad=dim)[j]
-            end
-        end
-        return result
+    @inline function enumX(xs)
+        # dim = length(xs)
+        # result = ones(Float64, 2^dim)
+        # for i in 1:2^dim
+        #     for j in 1:dim
+        #         result[i] *= xs[j]^digits(i-1,base=2,pad=dim)[j]
+        #     end
+        # end
+        # return result
+        return [prod(xs .^ digits(i-1, base=2, pad=length(xs)) ) for i in 1:2^length(xs)]
     end
-    function f(as, xs)
-        dim = length(xs)
-        result = 0.0
-        ex = enumX(xs)
-        for i in 1:2^dim
-            result += as[i]*ex[i]
-        end
-        return result
+    @inline function f(as, xs)
+        # dim = length(xs)
+        # result = 0.0
+        # ex = enumX(xs)
+        # for i in 1:2^dim
+        #     result += as[i]*ex[i]
+        # end
+        # return result
+        return sum(as .* enumX(xs))
     end
 
     dim = length(xs)
