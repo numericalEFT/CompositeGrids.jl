@@ -5,7 +5,7 @@ and optimized grids like barycheb for interpolation and gausslegendre for integr
 """
 module SimpleGrid
 
-export AbstractGrid, OpenGrid, ClosedGrid, Uniform, BaryCheb, GaussLegendre, Arbitrary, Log
+export AbstractGrid, OpenGrid, ClosedGrid, Uniform, BaryCheb, GaussLegendre, Arbitrary, Log, denseindex
 
 using StaticArrays, FastGaussQuadrature
 
@@ -329,6 +329,8 @@ end
 Base.getindex(grid::Log, i) = grid.grid[i]
 Base.firstindex(grid::Log) = 1
 Base.lastindex(grid::Log) = grid.size
-
+@inline function denseindex(grid::Log)
+    return [(grid.d2s) ? 1 : grid.size, ]
+end
 
 end

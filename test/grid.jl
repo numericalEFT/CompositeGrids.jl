@@ -118,6 +118,7 @@
     @testset "LogGrid" begin
         loggrid = SimpleGrid.Log{Float64}([0.0, 1.0], 6, 0.001, true )
         println(loggrid.grid)
+        println(SimpleGrid.denseindex(loggrid))
         @test floor(loggrid, 0.0) == 1
         @test floor(loggrid, loggrid[1]) == 1
 
@@ -130,6 +131,7 @@
 
         loggrid = SimpleGrid.Log{Float64}([0.0, 1.0], 6, 0.001,false )
         println(loggrid.grid)
+        println(SimpleGrid.denseindex(loggrid))
         @test floor(loggrid, 0.0) == 1
         @test floor(loggrid, loggrid[1]) == 1
 
@@ -200,6 +202,8 @@ end
         comp = CompositeGrid.LogDensedGrid(:uniform, [0.0,10.0], [0.0,1.0,2.0,2.000001],4,0.001,4)
         println(comp.grid)
         println(comp.inits)
+        println(CompositeGrid.denseindex(comp))
+        println([comp[i] for i in CompositeGrid.denseindex(comp)])
 
         @test floor(comp, 0.0) == 1
         @test floor(comp, comp[1]) == 1
