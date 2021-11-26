@@ -1,4 +1,18 @@
-# CompositeGrids
-
 [[https://numericaleft.github.io/CompositeGrids.jl/dev/][https://img.shields.io/badge/docs-dev-blue.svg]]
+
+#+OPTIONS: toc:2
+
+* Introduction
+
+* Table of Contents :TOC_2_gh:
+- [[#introduction][Introduction]]
+- [[#quick-start][Quick Start]]
+- [[#installation][Installation]]
+- [[#manual][Manual]]
+
+* Quick Start
+  
+* Installation
+  
+* Manual
 
