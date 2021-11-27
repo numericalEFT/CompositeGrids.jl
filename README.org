@@ -16,7 +16,7 @@
   - [[#interpolation-and-integration][Interpolation and Integration]]
 
 * Quick Start
-  #+begin_src julia-vterm :session :results output
+  #+begin_src julia-vterm :session :results output replace :exports both
     using CompositeGrids
     β = 10
     
