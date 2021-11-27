@@ -4,15 +4,69 @@
 
 * Introduction
 
+  CompositeGrids provides 
+  
 * Table of Contents :TOC_2_gh:
 - [[#introduction][Introduction]]
 - [[#quick-start][Quick Start]]
 - [[#installation][Installation]]
 - [[#manual][Manual]]
+  - [[#simple-grids][Simple Grids]]
+  - [[#composite-grids][Composite Grids]]
+  - [[#interpolation-and-integration][Interpolation and Integration]]
 
 * Quick Start
+  #+begin_src julia-vterm :session :results output
+    using CompositeGrids
+    β = 10
+    
+    # Generating a log densed composite grid with LogDensedGrid()
+    tgrid = CompositeGrid.LogDensedGrid(:gauss, [0.0, β], [0.0, β], 4, 0.001, 5)
+    # The base type of the grid is :gauss which is optimized for integration, for interpolation use :cheb
+    # The grid is defined on [0.0, β], and is densed at 0.0 and β, as given by 2nd and 3rd parameter.
+    # The grid has 3 layers.
+    # The outer layer is defined by the boundary and densed points. In this case its:
+    println("Outer layer:",tgrid.panel.grid)
+    # The middle layer is a log grid with 4 points and minimum interval length 0.001:
+    println("First subgrid of middle layer:",tgrid.subgrids[1].panel.grid)
+    # The inner layer is a Gauss-Legendre grid with 5 points:
+    println("First subgrid of inner layer:",tgrid.subgrids[1].subgrids[1].grid)
+    
+    # function to be integrated:
+    f(t) = exp(t)+exp(β-t)
+    # numerical value on grid points:
+    data = [f(t) for (ti, t) in enumerate(tgrid.grid)]
+    
+    # integrate with integrate1D():
+    int_result = Interp.integrate1D(data, tgrid)
+    
+    println("result=",int_result)
+    println("comparing to:",2*(exp(β)-1))
+  #+end_src
+
+  #+RESULTS:
+  : Outer layer:[0.0, 5.0, 10.0]
+  : First subgrid of middle layer:[0.0, 0.001, 0.07071067811865475, 5.0]
+  : First subgrid of inner layer:[4.691007703066803e-5, 0.00023076534494715847, 0.0005, 0.0007692346550528415, 0.000953089922969332]
+  : result=44050.865988011356
+  : comparing to:44050.931589613436
   
 * Installation
+  Static version could be installed via standard package manager with Pkg.add("CompositeGrids").
+
+  For developing version, git clone this repo and add with Pkg.develop("directory/of/the/repo").
   
 * Manual
+  
+** Simple Grids
+
+   A detailed manual can be found [[https://numericaleft.github.io/CompositeGrids.jl/dev/lib/simple/][here]].
+   
+** Composite Grids
+
+   A detailed manual can be found [[https://numericaleft.github.io/CompositeGrids.jl/dev/lib/composite/][here]].
+      
+** Interpolation and Integration
+   
+   A detailed manual can be found [[https://numericaleft.github.io/CompositeGrids.jl/dev/lib/interpolate/][here]].
 
