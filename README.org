@@ -4,7 +4,10 @@
 
 * Introduction
 
-  CompositeGrids provides 
+  CompositeGrids gives a unified interface to generate various common 1D grids
+  and also the composite grids that is a combination of basic grids,
+  together with the floor function, interpolation function and also integration function
+  that is optimized for some of the grids.
   
 * Table of Contents :TOC_2_gh:
 - [[#introduction][Introduction]]
@@ -60,6 +63,39 @@
   
 ** Simple Grids
 
+   Various basic grids are designed for usage and also as components of composite grids, including:
+   Arbitrary, Uniform, Log, BaryCheb, and GaussLegendre.
+
+   Arbitrary grid is the most general basic grid, which takes an array and turn it into a grid.
+   A O(ln(N)) floor function based on searchsortedfirst() is provided.
+
+   Uniform grid is defined by the boundary and number of grid points.
+   A O(1) floor function is provided.
+
+   Log grid is defined by the boundary, number of grid points, minimum interval, and also the direction.
+   A log densed grid is generated according to the parameters provided.
+   For example:
+   #+begin_src julia :session :results output replace :exports both
+     using CompositeGrids
+     loggrid = SimpleGrid.Log{Float64}([0.0,1.0], 6, 0.0001, true)
+     println(loggrid.grid)
+   #+end_src
+
+   #+RESULTS:
+   : [0.0, 0.00010000000000000005, 0.0010000000000000002, 0.010000000000000002, 0.1, 1.0]
+   A O(1) floor function is provided.
+
+   BaryCheb grid is designed for interpolation. It's defined by the boundary and number of grid points,
+   but the grid points are not distributed uniformly. The floor function is not optimized
+   so the O(ln(N)) function will be used, but the interpolation is based on an optimized algorithm.
+
+   GaussLegendre grid is designed for integration. It's defined by the boundary and number of grid points,
+   but the grid points are not distributed uniformly. The floor function is not optimized
+   so the O(ln(N)) function will be used. The 1D integration is optimized.
+
+   Also notice that there's open grids and closed grids. Closed grids means that the boundary points are
+   also grid points, while open grids means the opposite. Only BaryCheb and GaussLegendre are open.
+   
    A detailed manual can be found [[https://numericaleft.github.io/CompositeGrids.jl/dev/lib/simple/][here]].
    
 ** Composite Grids
