@@ -80,10 +80,10 @@
    Arbitrary, Uniform, Log, BaryCheb, and GaussLegendre.
 
    Arbitrary grid is the most general basic grid, which takes an array and turn it into a grid.
-   An $O(\ln(N))$ floor function based on searchsortedfirst() is provided.
+   An O(\ln(N)) floor function based on searchsortedfirst() is provided.
 
    Uniform grid is defined by the boundary and number of grid points.
-   An $O(1)$ floor function is provided.
+   An O(1) floor function is provided.
 
    Log grid is defined by the boundary, number of grid points, minimum interval, and also the direction.
    A log densed grid is generated according to the parameters provided.
@@ -96,15 +96,15 @@
 
    #+RESULTS:
    : [0.0, 0.00010000000000000005, 0.0010000000000000002, 0.010000000000000002, 0.1, 1.0]
-   An $O(1)$ floor function is provided.
+   An O(1) floor function is provided.
 
    BaryCheb grid is designed for interpolation. It's defined by the boundary and number of grid points,
    but the grid points are not distributed uniformly. The floor function is not optimized
-   so the $O(\ln(N))$ function will be used, but the interpolation is based on an optimized algorithm.
+   so the O(\ln(N)) function will be used, but the interpolation is based on an optimized algorithm.
 
    GaussLegendre grid is designed for integration. It's defined by the boundary and number of grid points,
    but the grid points are not distributed uniformly. The floor function is not optimized
-   so the $O(\ln(N))$ function will be used. The 1D integration is optimized.
+   so the O(\ln(N)) function will be used. The 1D integration is optimized.
 
    Also notice that there's open grids and closed grids. Closed grids means that the boundary points are
    also grid points, while open grids means the opposite. Only BaryCheb and GaussLegendre are open.
@@ -118,8 +118,8 @@
    composite grid.
 
    LogDensedGrid is a useful generator of CompositeGrid which gives a general solution when an 1D grid on an
-   interval is needed to be log-densed around several points. For example, $\tau$ grids need to be densed around
-   $0$ and $\beta$, and momentum grids need to be densed around Fermi momentum.
+   interval is needed to be log-densed around several points. For example, \tau grids need to be densed around
+   0 and \beta, and momentum grids need to be densed around Fermi momentum.
    The grid is defined as a three-layer composite grid with the outer layer being an Arbitrary grid defined by
    the boundary and densed points, the middle layer a Log grid which is densed at the points required, and the
    inner layer a grid of three options. Three types are :cheb, :gauss, and :uniform, which corresponds to
@@ -132,7 +132,7 @@
       
 ** Interpolation and Integration
 
-   Interpolation gives an estimate of the function value at $x$ with given grid and function value on the grid.
+   Interpolation gives an estimate of the function value at x with given grid and function value on the grid.
    For most of the simple grids the interpolation is given by linear interpolation with the floor function to find
    the corresponding grid points. BaryCheb uses an optimized algorithm for interpolation which makes use of the information
    of all grid points, and thus gives a more precise interpolation with the same number of grid points, given the condition that
