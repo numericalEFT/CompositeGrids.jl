@@ -33,12 +33,12 @@
     # The base type of the grid is :gauss which is optimized for integration, for interpolation use :cheb
     # The grid is defined on [0.0, β], and is densed at 0.0 and β, as given by 2nd and 3rd parameter.
     # The grid has 3 layers.
-    # The outer layer is defined by the boundary and densed points. In this case its:
-    println("Outer layer:",tgrid.panel.grid)
+    # The top layer is defined by the boundary and densed points. In this case its:
+    println("Top layer:",tgrid.panel.grid)
     # The middle layer is a log grid with 4 points and minimum interval length 0.001:
     println("First subgrid of middle layer:",tgrid.subgrids[1].panel.grid)
-    # The inner layer is a Gauss-Legendre grid with 5 points:
-    println("First subgrid of inner layer:",tgrid.subgrids[1].subgrids[1].grid)
+    # The bottom layer is a Gauss-Legendre grid with 5 points:
+    println("First subgrid of bottom layer:",tgrid.subgrids[1].subgrids[1].grid)
     
     # function to be integrated:
     f(t) = exp(t)+exp(β-t)
@@ -53,9 +53,9 @@
   #+end_src
 
   #+RESULTS:
-  : Outer layer:[0.0, 5.0, 10.0]
+  : Top layer:[0.0, 5.0, 10.0]
   : First subgrid of middle layer:[0.0, 0.001, 0.07071067811865475, 5.0]
-  : First subgrid of inner layer:[4.691007703066803e-5, 0.00023076534494715847, 0.0005, 0.0007692346550528415, 0.000953089922969332]
+  : First subgrid of bottom layer:[4.691007703066803e-5, 0.00023076534494715847, 0.0005, 0.0007692346550528415, 0.000953089922969332]
   : result=44050.865988011356
   : comparing to:44050.931589613436
   
@@ -77,7 +77,7 @@
    - g.size gives the total number of grid points.
    - g.grid gives the array of grid points.
    - g[i] returns the i-th grid points, same as g.grid[i].
-   - floor(g, x) returns the largest index of grid point where g[i]<x. Return 1 for x<g[1] and grid.size-1 for x>g[end].
+   - floor(g, x) returns the largest index of grid point where g[i]<x. Return 1 for x<g[1] and (grid.size-1) for x>g[end].
 
    Interpolation and integration are also provided, with different implemented functions for different grids.
 
@@ -127,9 +127,9 @@
    LogDensedGrid is a useful generator of CompositeGrid which gives a general solution when an 1D grid on an
    interval is needed to be log-densed around several points. For example, \tau grids need to be densed around
    0 and \beta, and momentum grids need to be densed around Fermi momentum.
-   The grid is defined as a three-layer composite grid with the outer layer being an Arbitrary grid defined by
+   The grid is defined as a three-layer composite grid with the top layer being an Arbitrary grid defined by
    the boundary and densed points, the middle layer a Log grid which is densed at the points required, and the
-   inner layer a grid of three options. Three types are :cheb, :gauss, and :uniform, which corresponds to
+   bottom layer a grid of three options. Three types are :cheb, :gauss, and :uniform, which corresponds to
    BaryCheb grid for interpolation, GaussLegendre grid for integration, and Uniform grid for general use.
    The floor function is defined recursively, i.e. the floor function of the panel grid is called to find the
    corresponding subgrid, and then the floor function of the subgrid is called to find the result. Since the
