@@ -20,6 +20,10 @@
   - [[#interpolation-and-integration][Interpolation and Integration]]
 
 * Quick Start
+  
+  In the following example we show how to generate a \tau grid from 0 to \beta, log-densed at 0 and \beta,
+  and optimized for integration. The description is attached in the comments in the code.
+  
   #+begin_src julia :session :results output replace :exports both
     using CompositeGrids
     β = 10
@@ -56,6 +60,7 @@
   : comparing to:44050.931589613436
   
 * Installation
+  
   Static version could be installed via standard package manager with Pkg.add("CompositeGrids").
 
   For developing version, git clone this repo and add with Pkg.develop("directory/of/the/repo").
@@ -74,9 +79,11 @@
    - g[i] returns the i-th grid points, same as g.grid[i].
    - floor(g, x) returns the largest index of grid point where g[i]<x. Return 1 for x<g[1] and grid.size-1 for x>g[end].
 
+   Interpolation and integration are also provided, with different implemented functions for different grids.
+
 ** Simple Grids
 
-   Various basic grids are designed for usage and also as components of composite grids, including:
+   Various basic grids are designed for use and also as components of composite grids, including:
    Arbitrary, Uniform, Log, BaryCheb, and GaussLegendre.
 
    Arbitrary grid is the most general basic grid, which takes an array and turn it into a grid.
