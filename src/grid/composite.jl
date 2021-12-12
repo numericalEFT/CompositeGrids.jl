@@ -33,13 +33,13 @@ struct Composite{T<:AbstractFloat,PG,SG} <: SimpleGrid.ClosedGrid
     subgrids::Vector{SG}
     inits::Vector{Int}
 
-    """
-        function Composite{T,PG,SG}(panel, subgrids) where {T<:AbstractFloat,PG,SG}
+"""
+    function Composite{T,PG,SG}(panel, subgrids) where {T<:AbstractFloat,PG,SG}
 
-    create Composite grid from panel and subgrids.
-    if the boundary grid point of two neighbor subgrids are too close, they will be combined
-    in the whole grid.
-    """
+create Composite grid from panel and subgrids.
+if the boundary grid point of two neighbor subgrids are too close, they will be combined
+in the whole grid.
+"""
     function Composite{T,PG,SG}(panel, subgrids) where {T<:AbstractFloat,PG,SG}
         bound = [panel[1], panel[end]]
         @assert panel.size-1==length(subgrids)
