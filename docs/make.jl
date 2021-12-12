@@ -26,5 +26,5 @@ makedocs(;
 
 deploydocs(;
     repo="github.com/iintSjds/CompositeGrids.jl.git",
-    devbranch="main"
+    devbranch="dev"
 )
