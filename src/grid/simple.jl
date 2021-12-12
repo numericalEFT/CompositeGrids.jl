@@ -34,7 +34,7 @@ Arbitrary grid generated from given sorted grid.
 - `weight` : integration weight
 
 #Constructor:
-    function Arbitrary{T}(grid) where {T<:AbstractFloat}
+-    function Arbitrary{T}(grid) where {T<:AbstractFloat}
 """
 struct Arbitrary{T<:AbstractFloat} <: ClosedGrid
     bound::SVector{2,T}
@@ -100,7 +100,7 @@ Uniform grid generated on [bound[1], bound[2]] with N points
 - `weight` : integration weight
 
 #Constructor:
-    function Uniform{T}(bound, size) where {T<:AbstractFloat}
+-    function Uniform{T}(bound, size) where {T<:AbstractFloat}
 """
 struct Uniform{T<:AbstractFloat} <: ClosedGrid
     bound::SVector{2,T}
@@ -168,7 +168,7 @@ BaryCheb grid generated on [bound[1], bound[2]] with order N.
 - `weight` : interpolation weight
 
 #Constructor:
-    function BaryCheb{T}(bound, size) where {T<:AbstractFloat}
+-    function BaryCheb{T}(bound, size) where {T<:AbstractFloat}
 """
 struct BaryCheb{T<:AbstractFloat} <: OpenGrid
     bound::SVector{2,T}
@@ -209,7 +209,7 @@ GaussLegendre grid generated on [bound[1], bound[2]] with order N.
 - `weight` : integration weight
 
 #Constructor:
-    function GaussLegendre{T}(bound, size) where {T<:AbstractFloat}
+-    function GaussLegendre{T}(bound, size) where {T<:AbstractFloat}
 """
 struct GaussLegendre{T<:AbstractFloat} <: OpenGrid
     bound::SVector{2,T}
@@ -257,7 +257,7 @@ On [0, 1], a typical d2s Log grid looks like
 - `d2s` : dense to sparse or not
 
 #Constructor:
-    function Log{T}(bound, size, minterval, d2s) where {T<:AbstractFloat}
+-    function Log{T}(bound, size, minterval, d2s) where {T<:AbstractFloat}
 """
 struct Log{T<:AbstractFloat} <: ClosedGrid
     bound::SVector{2,T}
