@@ -32,6 +32,9 @@ Arbitrary grid generated from given sorted grid.
 - `size` : number of grid points
 - `grid` : grid points
 - `weight` : integration weight
+
+#Constructor:
+    function Arbitrary{T}(grid) where {T<:AbstractFloat}
 """
 struct Arbitrary{T<:AbstractFloat} <: ClosedGrid
     bound::SVector{2,T}
@@ -95,6 +98,9 @@ Uniform grid generated on [bound[1], bound[2]] with N points
 - `size` : number of grid points
 - `grid` : grid points
 - `weight` : integration weight
+
+#Constructor:
+    function Uniform{T}(bound, size) where {T<:AbstractFloat}
 """
 struct Uniform{T<:AbstractFloat} <: ClosedGrid
     bound::SVector{2,T}
@@ -160,6 +166,9 @@ BaryCheb grid generated on [bound[1], bound[2]] with order N.
 - `size` : number of grid points
 - `grid` : grid points
 - `weight` : interpolation weight
+
+#Constructor:
+    function BaryCheb{T}(bound, size) where {T<:AbstractFloat}
 """
 struct BaryCheb{T<:AbstractFloat} <: OpenGrid
     bound::SVector{2,T}
@@ -198,6 +207,9 @@ GaussLegendre grid generated on [bound[1], bound[2]] with order N.
 - `size` : number of grid points
 - `grid` : grid points
 - `weight` : integration weight
+
+#Constructor:
+    function GaussLegendre{T}(bound, size) where {T<:AbstractFloat}
 """
 struct GaussLegendre{T<:AbstractFloat} <: OpenGrid
     bound::SVector{2,T}
@@ -244,6 +256,8 @@ On [0, 1], a typical d2s Log grid looks like
 - `λ` : scale parameter
 - `d2s` : dense to sparse or not
 
+#Constructor:
+    function Log{T}(bound, size, minterval, d2s) where {T<:AbstractFloat}
 """
 struct Log{T<:AbstractFloat} <: ClosedGrid
     bound::SVector{2,T}
