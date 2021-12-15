@@ -32,6 +32,9 @@ Arbitrary grid generated from given sorted grid.
 - `size` : number of grid points
 - `grid` : grid points
 - `weight` : integration weight
+
+#Constructor:
+-    function Arbitrary{T}(grid) where {T<:AbstractFloat}
 """
 struct Arbitrary{T<:AbstractFloat} <: ClosedGrid
     bound::SVector{2,T}
@@ -39,11 +42,11 @@ struct Arbitrary{T<:AbstractFloat} <: ClosedGrid
     grid::Vector{T}
     weight::Vector{T}
 
-    """
-        function Arbitrary{T}(grid) where {T<:AbstractFloat}
+"""
+    function Arbitrary{T}(grid) where {T<:AbstractFloat}
 
-    create Arbitrary from grid.
-    """
+create Arbitrary from grid.
+"""
     function Arbitrary{T}(grid) where {T<:AbstractFloat}
         bound = [grid[1],grid[end]]
         size = length(grid)
@@ -95,6 +98,9 @@ Uniform grid generated on [bound[1], bound[2]] with N points
 - `size` : number of grid points
 - `grid` : grid points
 - `weight` : integration weight
+
+#Constructor:
+-    function Uniform{T}(bound, size) where {T<:AbstractFloat}
 """
 struct Uniform{T<:AbstractFloat} <: ClosedGrid
     bound::SVector{2,T}
@@ -102,11 +108,11 @@ struct Uniform{T<:AbstractFloat} <: ClosedGrid
     grid::Vector{T}
     weight::Vector{T}
 
-    """
-        function Uniform{T}(bound, N) where {T<:AbstractFloat}
+"""
+    function Uniform{T}(bound, N) where {T<:AbstractFloat}
 
-    create Uniform grid.
-    """
+create Uniform grid.
+"""
     function Uniform{T}(bound, N) where {T<:AbstractFloat}
         Ntot = N - 1
         interval = (bound[2]-bound[1])/Ntot
@@ -160,6 +166,9 @@ BaryCheb grid generated on [bound[1], bound[2]] with order N.
 - `size` : number of grid points
 - `grid` : grid points
 - `weight` : interpolation weight
+
+#Constructor:
+-    function BaryCheb{T}(bound, size) where {T<:AbstractFloat}
 """
 struct BaryCheb{T<:AbstractFloat} <: OpenGrid
     bound::SVector{2,T}
@@ -167,11 +176,11 @@ struct BaryCheb{T<:AbstractFloat} <: OpenGrid
     grid::Vector{T}
     weight::Vector{T}
 
-    """
-        function BaryCheb{T}(bound, N) where {T<:AbstractFloat}
+"""
+    function BaryCheb{T}(bound, N) where {T<:AbstractFloat}
 
-    create BaryCheb grid.
-    """
+create BaryCheb grid.
+"""
     function BaryCheb{T}(bound, N) where {T<:AbstractFloat}
         order = N
         x, w =barychebinit(order)
@@ -198,6 +207,9 @@ GaussLegendre grid generated on [bound[1], bound[2]] with order N.
 - `size` : number of grid points
 - `grid` : grid points
 - `weight` : integration weight
+
+#Constructor:
+-    function GaussLegendre{T}(bound, size) where {T<:AbstractFloat}
 """
 struct GaussLegendre{T<:AbstractFloat} <: OpenGrid
     bound::SVector{2,T}
@@ -205,11 +217,11 @@ struct GaussLegendre{T<:AbstractFloat} <: OpenGrid
     grid::Vector{T}
     weight::Vector{T}
 
-    """
-        function GaussLegendre{T}(bound, N) where {T<:AbstractFloat}
+"""
+    function GaussLegendre{T}(bound, N) where {T<:AbstractFloat}
 
-    create GaussLegendre grid.
-    """
+create GaussLegendre grid.
+"""
     function GaussLegendre{T}(bound, N) where {T<:AbstractFloat}
         order = N
         x, w = gausslegendre(order)
@@ -244,6 +256,8 @@ On [0, 1], a typical d2s Log grid looks like
 - `λ` : scale parameter
 - `d2s` : dense to sparse or not
 
+#Constructor:
+-    function Log{T}(bound, size, minterval, d2s) where {T<:AbstractFloat}
 """
 struct Log{T<:AbstractFloat} <: ClosedGrid
     bound::SVector{2,T}
@@ -254,11 +268,11 @@ struct Log{T<:AbstractFloat} <: ClosedGrid
     λ::T
     d2s::Bool
 
-    """
-        function Log{T}(bound, N, minterval, d2s) where {T<:AbstractFloat}
+"""
+    function Log{T}(bound, N, minterval, d2s) where {T<:AbstractFloat}
 
-    create Log grid.
-    """
+create Log grid.
+"""
     function Log{T}(bound, N, minterval, d2s) where {T<:AbstractFloat}
         grid = zeros(T, N)
         M = N-2

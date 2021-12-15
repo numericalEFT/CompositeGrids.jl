@@ -29,9 +29,14 @@
     β = 10
     
     # Generating a log densed composite grid with LogDensedGrid()
-    tgrid = CompositeGrid.LogDensedGrid(:gauss, [0.0, β], [0.0, β], 4, 0.001, 5)
-    # The base type of the grid is :gauss which is optimized for integration, for interpolation use :cheb
-    # The grid is defined on [0.0, β], and is densed at 0.0 and β, as given by 2nd and 3rd parameter.
+    tgrid = CompositeGrid.LogDensedGrid(
+        :gauss,# The top layer grid is :gauss, optimized for integration. For interpolation use :cheb
+        [0.0, β],# The grid is defined on [0.0, β]
+        [0.0, β],# and is densed at 0.0 and β, as given by 2nd and 3rd parameter.
+        4,# N of log grid
+        0.001, # niminum interval length of log grid
+        5 # N of bottom layer
+    )
     # The grid has 3 layers.
     # The top layer is defined by the boundary and densed points. In this case its:
     println("Top layer:",tgrid.panel.grid)

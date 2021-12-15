@@ -22,6 +22,12 @@ PG should always be ClosedGrid, while SG could be any grid.
 - `panel` : panel grid
 - `subgrids` : a vector of subgrids
 - `inits` : index of the first grid point of a subgrid on the whole grid
+
+#Constructor:
+-    function Composite{T,PG,SG}(panel, subgrids) where {T<:AbstractFloat,PG,SG}
+create Composite grid from panel and subgrids.
+if the boundary grid point of two neighbor subgrids are too close, they will be combined
+in the whole grid.
 """
 struct Composite{T<:AbstractFloat,PG,SG} <: SimpleGrid.ClosedGrid
     bound::SVector{2,T}
@@ -33,13 +39,13 @@ struct Composite{T<:AbstractFloat,PG,SG} <: SimpleGrid.ClosedGrid
     subgrids::Vector{SG}
     inits::Vector{Int}
 
-    """
-        function Composite{T,PG,SG}(panel, subgrids) where {T<:AbstractFloat,PG,SG}
+"""
+    function Composite{T,PG,SG}(panel, subgrids) where {T<:AbstractFloat,PG,SG}
 
-    create Composite grid from panel and subgrids.
-    if the boundary grid point of two neighbor subgrids are too close, they will be combined
-    in the whole grid.
-    """
+create Composite grid from panel and subgrids.
+if the boundary grid point of two neighbor subgrids are too close, they will be combined
+in the whole grid.
+"""
     function Composite{T,PG,SG}(panel, subgrids) where {T<:AbstractFloat,PG,SG}
         bound = [panel[1], panel[end]]
         @assert panel.size-1==length(subgrids)
