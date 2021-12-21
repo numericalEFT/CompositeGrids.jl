@@ -83,9 +83,16 @@ function Base.floor(grid::AbstractGrid, x) #where {T}
     return Base.floor(Int, result)
 end
 
-Base.getindex(grid::Arbitrary, i) = grid.grid[i]
-Base.firstindex(grid::Arbitrary) = 1
-Base.lastindex(grid::Arbitrary) = grid.size
+Base.size(grid::AbstractGrid) = grid.size
+Base.show(io::IO, grid::AbstractGrid) = print(io, grid.grid)
+Base.view(grid::AbstractGrid, inds...) where {N} = Base.view(grid.grid, inds...)
+# set is not allowed for grids
+Base.getindex(grid::AbstractGrid, i) = grid.grid[i]
+Base.firstindex(grid::AbstractGrid) = 1
+Base.lastindex(grid::AbstractGrid) = grid.size
+# iterator
+Base.iterate(grid::AbstractGrid) = (grid.grid[1],1)
+Base.iterate(grid::AbstractGrid, state) = (state>=grid.size) ? nothing : (grid.grid[state+1],state+1)
 
 
 """
@@ -151,11 +158,6 @@ function Base.floor(grid::Uniform{T}, x) where {T}
 
 end
 
-Base.getindex(grid::Uniform, i) = grid.grid[i]
-Base.firstindex(grid::Uniform) = 1
-Base.lastindex(grid::Uniform) = grid.size
-
-
 """
     struct BaryCheb{T<:AbstractFloat} <: OpenGrid
 
@@ -193,10 +195,6 @@ create BaryCheb grid.
     end
 end
 
-Base.getindex(grid::BaryCheb, i) = grid.grid[i]
-Base.firstindex(grid::BaryCheb) = 1
-Base.lastindex(grid::BaryCheb) = grid.size
-
 """
     struct GaussLegendre{T<:AbstractFloat} <: OpenGrid
 
@@ -233,10 +231,6 @@ create GaussLegendre grid.
         return new{T}(bound, N, grid, weight)
     end
 end
-
-Base.getindex(grid::GaussLegendre, i) = grid.grid[i]
-Base.firstindex(grid::GaussLegendre) = 1
-Base.lastindex(grid::GaussLegendre) = grid.size
 
 """
     struct Log{T<:AbstractFloat} <: ClosedGrid
@@ -340,9 +334,6 @@ function Base.floor(grid::Log{T}, x) where {T}
     return Base.floor(Int, result)
 end
 
-Base.getindex(grid::Log, i) = grid.grid[i]
-Base.firstindex(grid::Log) = 1
-Base.lastindex(grid::Log) = grid.size
 @inline function denseindex(grid::Log)
     return [(grid.d2s) ? 1 : grid.size, ]
 end

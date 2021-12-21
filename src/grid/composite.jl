@@ -102,10 +102,6 @@ function Base.floor(grid::Composite{T,PG,SG}, x) where {T,PG,SG}
     return result
 end
 
-Base.getindex(grid::Composite, i) = grid.grid[i]
-Base.firstindex(grid::Composite) = 1
-Base.lastindex(grid::Composite) = grid.size
-
 @inline function denseindex(grid::Composite{T,PG,SG}) where {T,PG,SG}
     if PG == SimpleGrid.Log{T}
         return [(grid.panel.d2s) ? 1 : grid.size, ]
