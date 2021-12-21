@@ -1,4 +1,6 @@
 [[https://numericaleft.github.io/CompositeGrids.jl/dev/][https://img.shields.io/badge/docs-dev-blue.svg]]
+[[https://github.com/numericaleft/CompositeGrids.jl/actions][https://github.com/numericaleft/CompositeGrids.jl/workflows/CI/badge.svg]]
+[[https://codecov.io/gh/numericaleft/CompositeGrids.jl][https://codecov.io/gh/numericalEFT/CompositeGrids.jl/branch/main/graph/badge.svg?token=WN6HO1XASY]]
 
 #+OPTIONS: toc:2
 
