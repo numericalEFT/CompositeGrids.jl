@@ -189,7 +189,8 @@ function LogDensedGrid(type, bound, dense_at, N, minterval, order, T=Float64)
     end
 
     dense_at = sort(dense_at)
-    @assert bound[1]<=dense_at[1]<dense_at[end]<=bound[2]
+    @assert bound[1]<=dense_at[1]<=dense_at[end]<=bound[2]
+
     dp = Vector{T}([])
     for i in 1:length(dense_at)
         if i==1
