@@ -42,6 +42,22 @@
             # println("$k, $t, $fbar, ", f(k, t))
             @test abs(f(t) - fbar) < 3.e-6 # linear interpolation, so error is δK+δt
         end
+
+        data2 = zeros((2,tgrid.size))
+
+        for i in 1:2
+            for (ti, t) in enumerate(tgrid.grid)
+                data2[i,ti] = f(t)
+            end
+        end
+        tlist = rand(10) * β
+
+        for (ti, t) in enumerate(tlist)
+            fbar = Interp.interp1D(data2, tgrid, t, dims=2)
+            @test abs(f(t) - fbar[1]) < 3.e-6 # linear interpolation, so error is δK+δt
+            @test abs(f(t) - fbar[2]) < 3.e-6 # linear interpolation, so error is δK+δt
+        end
+
     end
 
     @testset "LinearND" begin

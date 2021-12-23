@@ -137,17 +137,23 @@ linear interpolation of data(x)
 end
 
 """
-    function interp1D(data, xgrid, x)
+    function interp1D(data, xgrid, x; dims)
 
-linear interpolation of data(x)
+linear interpolation of data(x) with single or multiple dimension.
+For 1D data, return a number; for multiple dimension, reduce the given dims.
 
 #Arguments:
 - xgrid: one-dimensional grid of x
 - data: one-dimensional array of data
 - x: x
+- dims: dims to be interpolated in data
 """
-function interp1D(data, xgrid::T, x) where {T}
-    interp1D(InterpStyle(T), data, xgrid, x)
+function interp1D(data, xgrid::T, x; dims=1) where {T}
+    if ndims(data) == 1
+        return interp1D(InterpStyle(T), data, xgrid, x)
+    else
+        return dropdims(mapslices(u->interp1D(InterpStyle(T), u, xgrid, x), data, dims=dims), dims=dims)
+    end
 end
 
 """
