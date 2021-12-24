@@ -147,12 +147,17 @@ For 1D data, return a number; for multiple dimension, reduce the given axis.
 - data: one-dimensional array of data
 - x: x
 - axis: axis to be interpolated in data
+- interpstyle: by default use optimized method; use linear interp if :linear
 """
-function interp1D(data, xgrid::T, x; axis=1) where {T}
+function interp1D(data, xgrid::T, x; axis=1, interpstyle=:default) where {T}
+    IS = InterpStyle(T)
+    if interpstyle == :linear
+        IS = FloorInterp()
+    end
     if ndims(data) == 1
-        return interp1D(InterpStyle(T), data, xgrid, x)
+        return interp1D(IS, data, xgrid, x)
     else
-        return dropdims(mapslices(u->interp1D(InterpStyle(T), u, xgrid, x), data, dims=axis), dims=axis)
+        return dropdims(mapslices(u->interp1D(IS, u, xgrid, x), data, dims=axis), dims=axis)
     end
 end
 
@@ -212,12 +217,17 @@ For ND data, do interpolation of data(grid[1:end]) at given axis, return data of
 - data: one-dimensional array of data
 - grid: points to be interpolated on
 - axis: axis to be interpolated in data
+- interpstyle: by default use optimized method; use linear interp if :linear
 """
-function interpGrid(data, xgrid::T, grid; axis=1) where {T}
+function interpGrid(data, xgrid::T, grid; axis=1, interpstyle=:default) where {T}
+    IS = InterpStyle(T)
+    if interpstyle == :linear
+        IS = FloorInterp()
+    end
     if ndims(data) == 1
-        return interpGrid(InterpStyle(T), data, xgrid, grid)
+        return interpGrid(IS, data, xgrid, grid)
     else
-        return mapslices(u->interpGrid(InterpStyle(T), u, xgrid, grid), data, dims=axis)
+        return mapslices(u->interpGrid(IS, u, xgrid, grid), data, dims=axis)
     end
 end
 
