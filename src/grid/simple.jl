@@ -3,7 +3,7 @@ Basic grids including common grids like arbitrary grids, uniform grids, log grid
 and optimized grids like barycheb for interpolation and gausslegendre for integration.
 
 """
-module SimpleGrid
+module SimpleG
 
 export AbstractGrid, OpenGrid, ClosedGrid, Uniform, BaryCheb, GaussLegendre, Arbitrary, Log, denseindex
 

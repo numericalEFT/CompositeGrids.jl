@@ -8,9 +8,9 @@ using StaticArrays, FastGaussQuadrature, CompositeGrids
 #include("chebyshev.jl")
 
 # include("simple.jl")
-# using .SimpleGrid
+# using .SimpleG
 # include("composite.jl")
-# using .CompositeGrid
+# using .CompositeG
 
 abstract type InterpStyle end
 struct FloorInterp <: InterpStyle end
@@ -18,8 +18,8 @@ struct ChebInterp <: InterpStyle end
 struct CompositeInterp <: InterpStyle end
 
 InterpStyle(::Type) = FloorInterp()
-InterpStyle(::Type{<:SimpleGrid.BaryCheb}) = ChebInterp()
-InterpStyle(::Type{<:CompositeGrid.Composite}) = CompositeInterp()
+InterpStyle(::Type{<:SimpleG.BaryCheb}) = ChebInterp()
+InterpStyle(::Type{<:CompositeG.Composite}) = CompositeInterp()
 
 """
     function linearND(data, xgrids, xs)
@@ -137,7 +137,7 @@ linear interpolation of data(x)
 end
 
 """
-    function interp1D(data, xgrid, x; axis=1)
+    function interp1D(data, xgrid, x; axis=1, interpstyle=:default)
 
 linear interpolation of data(x) with single or multiple dimension.
 For 1D data, return a number; for multiple dimension, reduce the given axis.
@@ -186,7 +186,7 @@ linear interpolation of data(x), barycheb for BaryCheb grid
 - x: x
 """
 function interp1D(::ChebInterp, data, xgrid, x)
-    return SimpleGrid.barycheb(xgrid.size, x, data, xgrid.weight, xgrid.grid)
+    return SimpleG.barycheb(xgrid.size, x, data, xgrid.weight, xgrid.grid)
 end
 
 """
@@ -208,7 +208,7 @@ end
 
 
 """
-    function interpGrid(data, xgrid, grid; axis=1)
+    function interp1DGrid(data, xgrid, grid; axis=1, interpstyle=:default)
 For 1D data, do interpolation of data(grid[1:end]), return a Vector.
 For ND data, do interpolation of data(grid[1:end]) at given axis, return data of same dimension.
 
@@ -219,20 +219,20 @@ For ND data, do interpolation of data(grid[1:end]) at given axis, return data of
 - axis: axis to be interpolated in data
 - interpstyle: by default use optimized method; use linear interp if :linear
 """
-function interpGrid(data, xgrid::T, grid; axis=1, interpstyle=:default) where {T}
+function interp1DGrid(data, xgrid::T, grid; axis=1, interpstyle=:default) where {T}
     IS = InterpStyle(T)
     if interpstyle == :linear
         IS = FloorInterp()
     end
     if ndims(data) == 1
-        return interpGrid(IS, data, xgrid, grid)
+        return interp1DGrid(IS, data, xgrid, grid)
     else
-        return mapslices(u->interpGrid(IS, u, xgrid, grid), data, dims=axis)
+        return mapslices(u->interp1DGrid(IS, u, xgrid, grid), data, dims=axis)
     end
 end
 
 """
-    function interpGrid(::Union{FloorInterp,ChebInterp}, data, xgrid, grid)
+    function interp1DGrid(::Union{FloorInterp,ChebInterp}, data, xgrid, grid)
 
 linear interpolation of data(grid[1:end]), return a Vector
 simply call interp1D on each points
@@ -242,7 +242,7 @@ simply call interp1D on each points
 - data: one-dimensional array of data
 - grid: points to be interpolated on
 """
-function interpGrid(::Union{FloorInterp,ChebInterp}, data, xgrid, grid)
+function interp1DGrid(::Union{FloorInterp,ChebInterp}, data, xgrid, grid)
     ff = zeros(eltype(data), length(grid))
     for (xi, x) in enumerate(grid)
         ff[xi] = interp1D(data, xgrid, x)
@@ -255,7 +255,7 @@ function interpGrid(::Union{FloorInterp,ChebInterp}, data, xgrid, grid)
 end
 
 """
-    function interpGrid(::CompositeInterp, data, xgrid, grid)
+    function interp1DGrid(::CompositeInterp, data, xgrid, grid)
 
 linear interpolation of data(grid[1:end]), return a Vector
 grid should be sorted.
@@ -265,7 +265,7 @@ grid should be sorted.
 - data: one-dimensional array of data
 - grid: points to be interpolated on
 """
-function interpGrid(::CompositeInterp, data, xgrid, grid)
+function interp1DGrid(::CompositeInterp, data, xgrid, grid)
     ff = zeros(eltype(data), length(grid))
 
     init, curr = 1, 1
@@ -277,11 +277,11 @@ function interpGrid(::CompositeInterp, data, xgrid, grid)
             end
             if grid[curr]<xgrid.panel[pi+1] && curr==length(grid)
                 @assert xgrid.subgrids[pi].bound[1]<=grid[init]<=grid[curr]<=xgrid.subgrids[pi].bound[2]
-                ff[init:curr] = interpGrid(data[head:tail], xgrid.subgrids[pi], grid[init:curr])
+                ff[init:curr] = interp1DGrid(data[head:tail], xgrid.subgrids[pi], grid[init:curr])
                 return ff
             else
                 @assert xgrid.subgrids[pi].bound[1]<=grid[init]<=grid[curr-1]<=xgrid.subgrids[pi].bound[2]
-                ff[init:curr-1] = interpGrid(data[head:tail], xgrid.subgrids[pi], grid[init:curr-1])
+                ff[init:curr-1] = interp1DGrid(data[head:tail], xgrid.subgrids[pi], grid[init:curr-1])
             end
             # println(data[head:tail])
             # println(xgrid.subgrids[pi].grid)
@@ -299,11 +299,11 @@ struct NoIntegrate <: IntegrateStyle end
 struct CompositeIntegrate <: IntegrateStyle end
 
 IntegrateStyle(::Type) = NoIntegrate()
-IntegrateStyle(::Type{<:SimpleGrid.GaussLegendre}) = WeightIntegrate()
-IntegrateStyle(::Type{<:SimpleGrid.Uniform}) = WeightIntegrate()
-IntegrateStyle(::Type{<:SimpleGrid.Arbitrary}) = WeightIntegrate()
-IntegrateStyle(::Type{<:SimpleGrid.Log}) = WeightIntegrate()
-IntegrateStyle(::Type{<:CompositeGrid.Composite}) = CompositeIntegrate()
+IntegrateStyle(::Type{<:SimpleG.GaussLegendre}) = WeightIntegrate()
+IntegrateStyle(::Type{<:SimpleG.Uniform}) = WeightIntegrate()
+IntegrateStyle(::Type{<:SimpleG.Arbitrary}) = WeightIntegrate()
+IntegrateStyle(::Type{<:SimpleG.Log}) = WeightIntegrate()
+IntegrateStyle(::Type{<:CompositeG.Composite}) = CompositeIntegrate()
 
 
 """
