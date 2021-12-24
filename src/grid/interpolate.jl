@@ -146,7 +146,7 @@ For 1D data, return a number; for multiple dimension, reduce the given axis.
 - xgrid: one-dimensional grid of x
 - data: one-dimensional array of data
 - x: x
-- dims: dims to be interpolated in data
+- axis: axis to be interpolated in data
 """
 function interp1D(data, xgrid::T, x; axis=1) where {T}
     if ndims(data) == 1
@@ -211,6 +211,7 @@ For ND data, do interpolation of data(grid[1:end]) at given axis, return data of
 - xgrid: one-dimensional grid of x
 - data: one-dimensional array of data
 - grid: points to be interpolated on
+- axis: axis to be interpolated in data
 """
 function interpGrid(data, xgrid::T, grid; axis=1) where {T}
     if ndims(data) == 1
@@ -218,7 +219,6 @@ function interpGrid(data, xgrid::T, grid; axis=1) where {T}
     else
         return mapslices(u->interpGrid(InterpStyle(T), u, xgrid, grid), data, dims=axis)
     end
-
 end
 
 """
@@ -297,16 +297,23 @@ IntegrateStyle(::Type{<:CompositeGrid.Composite}) = CompositeIntegrate()
 
 
 """
-    function integrate1D(data, xgrid)
+    function integrate1D(data, xgrid; axis=1)
 
-calculate integration of data[i] on xgrid
+calculate integration of data[i] on xgrid.
+For 1D data, return a number; for multiple dimension, reduce the given axis.
 
 #Arguments:
 - xgrid: one-dimensional grid of x
 - data: one-dimensional array of data
+- axis: axis to be integrated in data
 """
-function integrate1D(data, xgrid::T) where {T}
-    return integrate1D(IntegrateStyle(T), data, xgrid)
+function integrate1D(data, xgrid::T; axis=1) where {T}
+    if ndims(data) == 1
+        return integrate1D(IntegrateStyle(T), data, xgrid)
+    else
+        return dropdims(mapslices(u->integrate1D(IntegrateStyle(T), u, xgrid), data, dims=axis), dims=axis)
+    end
+
 end
 
 """

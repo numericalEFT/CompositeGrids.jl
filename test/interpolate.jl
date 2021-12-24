@@ -230,14 +230,16 @@
         tgrid = CompositeGrid.LogDensedGrid(:gauss, [0.0, β], [0.0, 0.5β, β], 2, 0.001, 3)
         # tugrid = Grid.Uniform{Float64,33}(0.0, β, (true, true))
         # kugrid = Grid.Uniform{Float64,33}(0.0, maxK, (true, true))
-        data = zeros(tgrid.size)
+        data = zeros(2, tgrid.size)
         for (ti, t) in enumerate(tgrid.grid)
-            data[ti] = f(t)
+            data[1,ti] = f(t)
+            data[2,ti] = f(t)
         end
         println(tgrid.grid)
         println(data)
-        int_result = Interp.integrate1D(data, tgrid)
-        @test abs(int_result - 0.5) < 3.e-6
+        int_result = Interp.integrate1D(data, tgrid; axis=2)
+        @test abs(int_result[1] - 0.5) < 3.e-6
+        @test abs(int_result[2] - 0.5) < 3.e-6
     end
 end
 
