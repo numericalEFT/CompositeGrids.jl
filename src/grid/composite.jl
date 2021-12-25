@@ -3,14 +3,14 @@ Composite grid that has tree structure. The whole interval is first divided by a
 then each interval of a panel grid is divided by a smaller grid in subgrids. Subgrid could also be
 composite grid.
 """
-module CompositeGrid
+module CompositeG
 
 export LogDensedGrid, Composite, denseindex
 
 using StaticArrays, FastGaussQuadrature, CompositeGrids
 
 """
-    struct Composite{T<:AbstractFloat,PG,SG} <: SimpleGrid.ClosedGrid
+    struct Composite{T<:AbstractFloat,PG,SG} <: SimpleG.ClosedGrid
 
 Composite grid generated with panel grid of type PG and subgrids of type SG.
 PG should always be ClosedGrid, while SG could be any grid.
@@ -29,7 +29,7 @@ create Composite grid from panel and subgrids.
 if the boundary grid point of two neighbor subgrids are too close, they will be combined
 in the whole grid.
 """
-struct Composite{T<:AbstractFloat,PG,SG} <: SimpleGrid.ClosedGrid
+struct Composite{T<:AbstractFloat,PG,SG} <: SimpleG.ClosedGrid
     bound::SVector{2,T}
     size::Int
     grid::Vector{T}
@@ -87,7 +87,7 @@ if floor on panel grid is needed, simply call floor(grid.panel, x).
 return 1 for x<grid[1] and grid.size-1 for x>grid[end].
 """
 function Base.floor(grid::Composite{T,PG,SG}, x) where {T,PG,SG}
-    if SG<:SimpleGrid.ClosedGrid
+    if SG<:SimpleG.ClosedGrid
         i = floor(grid.panel, x)
         return grid.inits[i]-1+floor(grid.subgrids[i],x)
     end
@@ -102,16 +102,12 @@ function Base.floor(grid::Composite{T,PG,SG}, x) where {T,PG,SG}
     return result
 end
 
-Base.getindex(grid::Composite, i) = grid.grid[i]
-Base.firstindex(grid::Composite) = 1
-Base.lastindex(grid::Composite) = grid.size
-
 @inline function denseindex(grid::Composite{T,PG,SG}) where {T,PG,SG}
-    if PG == SimpleGrid.Log{T}
+    if PG == SimpleG.Log{T}
         return [(grid.panel.d2s) ? 1 : grid.size, ]
-    # elseif SG == SimpleGrid.Log{T}
-    #     println("in di",[([grid.inits[i]-1+SimpleGrid.denseindex(grid.subgrids[i]) for i in 1:grid.size]...)...])
-    #     return unique([([grid.inits[i]-1+SimpleGrid.denseindex(grid.subgrids[i]) for i in 1:grid.size]...)...])
+    # elseif SG == SimpleG.Log{T}
+    #     println("in di",[([grid.inits[i]-1+SimpleG.denseindex(grid.subgrids[i]) for i in 1:grid.size]...)...])
+    #     return unique([([grid.inits[i]-1+SimpleG.denseindex(grid.subgrids[i]) for i in 1:grid.size]...)...])
     else
         # for i in 1:length(grid.subgrids)
         #     println(grid.inits[i])
@@ -139,16 +135,16 @@ create a composite grid with a Log grid as panel and subgrids of selected type.
 """
 function CompositeLogGrid(type, bound, N, minterval, d2s, order, T=Float64)
     if type == :cheb
-        SubGridType = SimpleGrid.BaryCheb{T}
+        SubGridType = SimpleG.BaryCheb{T}
     elseif type == :gauss
-        SubGridType = SimpleGrid.GaussLegendre{T}
+        SubGridType = SimpleG.GaussLegendre{T}
     elseif type == :uniform
-        SubGridType = SimpleGrid.Uniform{T}
+        SubGridType = SimpleG.Uniform{T}
     else
         error("$type not implemented!")
     end
 
-    panel = SimpleGrid.Log{T}(bound, N, minterval, d2s)
+    panel = SimpleG.Log{T}(bound, N, minterval, d2s)
     #println("logpanel:",panel.grid)
     subgrids = Vector{SubGridType}([])
 
@@ -157,7 +153,7 @@ function CompositeLogGrid(type, bound, N, minterval, d2s, order, T=Float64)
         push!(subgrids, SubGridType(_bound,order))
     end
 
-    return Composite{T, SimpleGrid.Log{T},SubGridType}(panel,subgrids)
+    return Composite{T, SimpleG.Log{T},SubGridType}(panel,subgrids)
 
 end
 
@@ -179,11 +175,11 @@ if two densed point is too close to each other, they will be combined.
 """
 function LogDensedGrid(type, bound, dense_at, N, minterval, order, T=Float64)
     if type == :cheb
-        SubGridType = SimpleGrid.BaryCheb{T}
+        SubGridType = SimpleG.BaryCheb{T}
     elseif type == :gauss
-        SubGridType = SimpleGrid.GaussLegendre{T}
+        SubGridType = SimpleG.GaussLegendre{T}
     elseif type == :uniform
-        SubGridType = SimpleGrid.Uniform{T}
+        SubGridType = SimpleG.Uniform{T}
     else
         error("$type not implemented!")
     end
@@ -250,15 +246,15 @@ function LogDensedGrid(type, bound, dense_at, N, minterval, order, T=Float64)
         push!(d2slist, true)
     end
 
-    panel = SimpleGrid.Arbitrary{T}(panelgrid)
+    panel = SimpleG.Arbitrary{T}(panelgrid)
     #println("panel:",panel.grid)
-    subgrids = Vector{Composite{T, SimpleGrid.Log{T}, SubGridType}}([])
+    subgrids = Vector{Composite{T, SimpleG.Log{T}, SubGridType}}([])
 
     for i in 1:length(panel.grid)-1
         push!(subgrids, CompositeLogGrid(type, [panel[i],panel[i+1]], N, minterval, d2slist[i], order))
     end
 
-    return Composite{T, SimpleGrid.Arbitrary{T},Composite{T, SimpleGrid.Log{T}, SubGridType}}(panel,subgrids)
+    return Composite{T, SimpleG.Arbitrary{T},Composite{T, SimpleG.Log{T}, SubGridType}}(panel,subgrids)
 
 end
 

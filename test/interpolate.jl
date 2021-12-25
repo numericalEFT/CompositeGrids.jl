@@ -42,6 +42,25 @@
             # println("$k, $t, $fbar, ", f(k, t))
             @test abs(f(t) - fbar) < 3.e-6 # linear interpolation, so error is δK+δt
         end
+
+        data2 = zeros((2,tgrid.size))
+
+        for i in 1:2
+            for (ti, t) in enumerate(tgrid.grid)
+                data2[i,ti] = f(t)
+            end
+        end
+        tlist = rand(10) * β
+
+        fbars=Interp.interp1DGrid(data2, tgrid, tlist, axis=2)
+        for (ti, t) in enumerate(tlist)
+            fbar = Interp.interp1D(data2, tgrid, t, axis=2)
+            @test abs(f(t) - fbar[1]) < 3.e-6 # linear interpolation, so error is δK+δt
+            @test abs(f(t) - fbar[2]) < 3.e-6 # linear interpolation, so error is δK+δt
+            @test abs(f(t) - fbars[1, ti]) < 3.e-6 # linear interpolation, so error is δK+δt
+            @test abs(f(t) - fbars[2, ti]) < 3.e-6 # linear interpolation, so error is δK+δt
+        end
+
     end
 
     @testset "LinearND" begin
@@ -175,7 +194,7 @@
         tlist = rand(10) * β
         tlist = sort(tlist)
         println(tlist)
-        ff = Interp.interpGrid(data, tgrid, tlist)
+        ff = Interp.interp1DGrid(data, tgrid, tlist)
         ff_c = similar(ff)
 
         for (ti, t) in enumerate(tlist)
@@ -211,14 +230,16 @@
         tgrid = CompositeGrid.LogDensedGrid(:gauss, [0.0, β], [0.0, 0.5β, β], 2, 0.001, 3)
         # tugrid = Grid.Uniform{Float64,33}(0.0, β, (true, true))
         # kugrid = Grid.Uniform{Float64,33}(0.0, maxK, (true, true))
-        data = zeros(tgrid.size)
+        data = zeros(2, tgrid.size)
         for (ti, t) in enumerate(tgrid.grid)
-            data[ti] = f(t)
+            data[1,ti] = f(t)
+            data[2,ti] = f(t)
         end
         println(tgrid.grid)
         println(data)
-        int_result = Interp.integrate1D(data, tgrid)
-        @test abs(int_result - 0.5) < 3.e-6
+        int_result = Interp.integrate1D(data, tgrid; axis=2)
+        @test abs(int_result[1] - 0.5) < 3.e-6
+        @test abs(int_result[2] - 0.5) < 3.e-6
     end
 end
 
