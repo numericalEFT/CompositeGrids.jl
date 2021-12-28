@@ -140,9 +140,9 @@ function _interpsliced(neighbor::ChebNeighbor, data)
     return SimpleG.barycheb(length(neighbor.grid), neighbor.x, data, neighbor.weight, neighbor.grid)
 end
 
-function interpND(data, xgrids, xs)
+function interpND(data, xgrids, xs; method=:linear)
     dim = length(xs)
-    neighbors = [findneighbor(xgrids[i], xs[i]) for i in 1:dim]
+    neighbors = [findneighbor(xgrids[i], xs[i]; method) for i in 1:dim]
     indices = [nei.index for nei in neighbors]
 
     data_slice = dataslice(data, indices)
