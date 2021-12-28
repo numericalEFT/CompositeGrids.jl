@@ -35,11 +35,11 @@ Arbitrary grid generated from given sorted grid.
 #Constructor:
 -    function Arbitrary{T}(grid) where {T<:AbstractFloat}
 """
-struct Arbitrary{T<:AbstractFloat} <: ClosedGrid
+struct Arbitrary{T<:Real} <: ClosedGrid
     bound::SVector{2,T}
     size::Int
     grid::Vector{T}
-    weight::Vector{T}
+    weight::Vector{Float64}
 
 """
     function Arbitrary{T}(grid) where {T<:AbstractFloat}
