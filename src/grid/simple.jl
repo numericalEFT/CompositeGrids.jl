@@ -49,7 +49,7 @@ create Arbitrary from grid.
     function Arbitrary{T}(grid) where {T<:Real}
         bound = [grid[1],grid[end]]
         size = length(grid)
-        weight = similar(grid)
+        weight = zeros(Float64, size)
         for i in 1:size
             if i==1
                 weight[1] = 0.5*(grid[2]-grid[1])
