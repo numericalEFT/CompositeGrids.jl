@@ -21,6 +21,71 @@ InterpStyle(::Type) = FloorInterp()
 InterpStyle(::Type{<:SimpleG.BaryCheb}) = ChebInterp()
 InterpStyle(::Type{<:CompositeG.Composite}) = CompositeInterp()
 
+# return types of findneighbor, contains complete information for interp
+abstract type InterpNeighbor end
+
+# for linear interp, two nearest neighbor are needed
+struct LinearNeighbor{T<:AbstractFloat} <: InterpNeighbor
+    index::SVector{2,Int}
+    grid::SVector{2,T}
+end
+
+# for cheb interp, whole cheb grid is needed, together with interp weight
+# index is recorded as first and last index involved, useful for composite grids
+struct ChebNeighbor{T<:AbstractFloat} <: InterpNeighbor
+    index::SVector{2,Int}
+    grid::Vector{T}
+    weight::Vector{T}
+end
+
+function findneighbor(xgrid::T, x; method=:default) where {T}
+    IS = InterpStyle(T)
+    if method == :linear
+        IS = FloorInterp()
+    end
+    return findneighbor(IS, xgrid, x)
+end
+
+function findneighbor(::FloorInterp, xgrid, x)
+    T = eltype(xgrid.grid)
+    xi0,xi1 = 0,0
+    if(x<=xgrid[firstindex(xgrid)])
+        xi0=1
+        xi1=2
+    elseif(x>=xgrid[lastindex(xgrid)])
+        xi0=lastindex(xgrid)-1
+        xi1=xi0+1
+    else
+        xi0=floor(xgrid,x)
+        xi1=xi0+1
+    end
+
+    x0,x1 = xgrid[xi0], xgrid[xi1]
+
+    return LinearNeighbor{T}([xi0,xi1], [x0,x1])
+end
+
+function findneighbor(::ChebInterp, xgrid, x)
+    T = eltype(xgrid.grid)
+    return ChebNeighbor{T}([1,xgrid.size], xgrid.grid, xgrid.weight)
+end
+
+function findneighbor(::CompositeInterp, xgrid, x)
+    if xgrid.bottomtype == :cheb
+        T = eltype(xgrid.grid)
+        curr=xgrid
+        xi0 = 1
+        while !(typeof(curr)<:SimpleG.BaryCheb)
+            i = floor(curr.panel, x)
+            xi0 += curr.inits[i]-1
+            curr = curr.subgrids[i]
+        end
+        return ChebNeighbor{T}([xi0,curr.size-1+xi0], curr.grid, curr.weight)
+    else
+        return findneighbor(FloorInterp(), xgrid, x)
+    end
+end
+
 """
     function linearND(data, xgrids, xs)
 
@@ -137,7 +202,7 @@ linear interpolation of data(x)
 end
 
 """
-    function interp1D(data, xgrid, x; axis=1, interpstyle=:default)
+    function interp1D(data, xgrid, x; axis=1, method=:default)
 
 linear interpolation of data(x) with single or multiple dimension.
 For 1D data, return a number; for multiple dimension, reduce the given axis.
@@ -147,11 +212,11 @@ For 1D data, return a number; for multiple dimension, reduce the given axis.
 - data: one-dimensional array of data
 - x: x
 - axis: axis to be interpolated in data
-- interpstyle: by default use optimized method; use linear interp if :linear
+- method: by default use optimized method; use linear interp if :linear
 """
-function interp1D(data, xgrid::T, x; axis=1, interpstyle=:default) where {T}
+function interp1D(data, xgrid::T, x; axis=1, method=:default) where {T}
     IS = InterpStyle(T)
-    if interpstyle == :linear
+    if method == :linear
         IS = FloorInterp()
     end
     if ndims(data) == 1
@@ -208,7 +273,7 @@ end
 
 
 """
-    function interp1DGrid(data, xgrid, grid; axis=1, interpstyle=:default)
+    function interp1DGrid(data, xgrid, grid; axis=1, method=:default)
 For 1D data, do interpolation of data(grid[1:end]), return a Vector.
 For ND data, do interpolation of data(grid[1:end]) at given axis, return data of same dimension.
 
@@ -217,11 +282,11 @@ For ND data, do interpolation of data(grid[1:end]) at given axis, return data of
 - data: one-dimensional array of data
 - grid: points to be interpolated on
 - axis: axis to be interpolated in data
-- interpstyle: by default use optimized method; use linear interp if :linear
+- method: by default use optimized method; use linear interp if :linear
 """
-function interp1DGrid(data, xgrid::T, grid; axis=1, interpstyle=:default) where {T}
+function interp1DGrid(data, xgrid::T, grid; axis=1, method=:default) where {T}
     IS = InterpStyle(T)
-    if interpstyle == :linear
+    if method == :linear
         IS = FloorInterp()
     end
     if ndims(data) == 1

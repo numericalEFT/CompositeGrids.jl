@@ -22,6 +22,7 @@ PG should always be ClosedGrid, while SG could be any grid.
 - `panel` : panel grid
 - `subgrids` : a vector of subgrids
 - `inits` : index of the first grid point of a subgrid on the whole grid
+- `bottomtype` : type of bottom layer
 
 #Constructor:
 -    function Composite{T,PG,SG}(panel, subgrids) where {T<:AbstractFloat,PG,SG}
@@ -38,6 +39,8 @@ struct Composite{T<:AbstractFloat,PG,SG} <: SimpleG.ClosedGrid
     panel::PG
     subgrids::Vector{SG}
     inits::Vector{Int}
+
+    bottomtype::Symbol
 
 """
     function Composite{T,PG,SG}(panel, subgrids) where {T<:AbstractFloat,PG,SG}
@@ -69,8 +72,16 @@ in the whole grid.
 
         end
         size = length(grid)
-        
-        return new{T,PG,SG}(bound, size, grid, panel, subgrids,inits)
+
+        if SG <: Composite
+            bottomtype = subgrids[1].bottomtype
+        elseif SG <: SimpleG.BaryCheb
+            bottomtype = :cheb
+        else
+            bottomtype = :default
+        end
+
+        return new{T,PG,SG}(bound, size, grid, panel, subgrids,inits, bottomtype)
     end
 
 end

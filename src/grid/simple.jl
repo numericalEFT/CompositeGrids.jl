@@ -20,7 +20,6 @@ abstract type AbstractGrid end
 abstract type OpenGrid <: AbstractGrid end
 abstract type ClosedGrid <: AbstractGrid end
 
-
 """
 
     struct Arbitrary{T<:AbstractFloat} <: ClosedGrid
