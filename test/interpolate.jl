@@ -307,7 +307,7 @@
             @test neighbor.index[2] == floor(tgrid, t) + 1
 
             neighbor = Interp.findneighbor(tgrid, t)
-            data_slice = data[neighbor.index[1]:neighbor.index[2]]
+            data_slice = Interp.dataslice(data,neighbor.index)#data[neighbor.index[1]:neighbor.index[2]]
             fbar = Interp.interpsliced(neighbor, data_slice)
             @test abs(f(tgrid[ti]) - fbar) < 3.e-6 # linear interpolation, so error is δK+δt
             @test f(tgrid[ti]) < fbar
@@ -321,7 +321,7 @@
             @test neighbor.index[2] == floor(tgrid, t) + 1
 
             neighbor = Interp.findneighbor(tgrid, t)
-            data_slice = data[neighbor.index[1]:neighbor.index[2]]
+            data_slice = Interp.dataslice(data,neighbor.index)#data[neighbor.index[1]:neighbor.index[2]]
             fbar = Interp.interpsliced(neighbor, data_slice)
             @test abs(f(tgrid[ti]) - fbar) < 3.e-6 # linear interpolation, so error is δK+δt
             @test f(tgrid[ti]) > fbar

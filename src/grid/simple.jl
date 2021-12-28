@@ -82,6 +82,7 @@ function Base.floor(grid::AbstractGrid, x) #where {T}
     return Base.floor(Int, result)
 end
 
+Base.length(grid::AbstractGrid) = grid.size
 Base.size(grid::AbstractGrid) = grid.size
 Base.show(io::IO, grid::AbstractGrid) = print(io, grid.grid)
 Base.view(grid::AbstractGrid, inds...) where {N} = Base.view(grid.grid, inds...)

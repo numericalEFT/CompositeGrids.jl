@@ -26,7 +26,7 @@ abstract type InterpNeighbor end
 
 # for linear interp, two nearest neighbor are needed
 struct LinearNeighbor{T<:AbstractFloat} <: InterpNeighbor
-    index::SVector{2,Int}
+    index::UnitRange{Int}
     grid::SVector{2,T}
     x::T
 end
@@ -34,7 +34,7 @@ end
 # for cheb interp, whole cheb grid is needed, together with interp weight
 # index is recorded as first and last index involved, useful for composite grids
 struct ChebNeighbor{T<:AbstractFloat} <: InterpNeighbor
-    index::SVector{2,Int}
+    index::UnitRange{Int}
     grid::Vector{T}
     weight::Vector{T}
     x::T
@@ -64,12 +64,12 @@ function findneighbor(::FloorInterp, xgrid, x)
 
     x0,x1 = xgrid[xi0], xgrid[xi1]
 
-    return LinearNeighbor{T}([xi0,xi1], [x0,x1], x)
+    return LinearNeighbor{T}(xi0:xi1, [x0,x1], x)
 end
 
 function findneighbor(::ChebInterp, xgrid, x)
     T = eltype(xgrid.grid)
-    return ChebNeighbor{T}([1,xgrid.size], xgrid.grid, xgrid.weight, x)
+    return ChebNeighbor{T}(1:xgrid.size, xgrid.grid, xgrid.weight, x)
 end
 
 function findneighbor(::CompositeInterp, xgrid, x)
@@ -82,9 +82,36 @@ function findneighbor(::CompositeInterp, xgrid, x)
             xi0 += curr.inits[i]-1
             curr = curr.subgrids[i]
         end
-        return ChebNeighbor{T}([xi0,curr.size-1+xi0], curr.grid, curr.weight, x)
+        return ChebNeighbor{T}(xi0:(curr.size-1+xi0), curr.grid, curr.weight, x)
     else
         return findneighbor(FloorInterp(), xgrid, x)
+    end
+end
+
+function dataslice(data, axes::Int, indices)
+    return selectdim(data, axes, indices)
+end
+
+function dataslice(data, axes::NTuple{DIM,Int}, indices) where {DIM}
+    @assert DIM == length(indices)
+    slice = data
+    for i in 1:DIM
+        slice = selectdim(slice, axes[i], indices[i])
+    end
+    return slice
+end
+
+function dataslice(data, indices)
+    DIM = ndims(data)
+    if DIM!=1
+        @assert DIM == length(indices)
+    # slice = data
+    # for i in 1:DIM
+    #     slice = selectdim(slice, i, indices[i])
+    # end
+        return view(data, indices...)
+    else
+        return view(data, indices)
     end
 end
 
@@ -116,9 +143,9 @@ end
 function interpND(data, xgrids, xs)
     dim = length(xs)
     neighbors = [findneighbor(xgrids[i], xs[i]) for i in 1:dim]
-    indices = [nei.index[1]:nei.index[2] for nei in neighbors]
+    indices = [nei.index for nei in neighbors]
 
-    data_slice = view(data, indices...)
+    data_slice = dataslice(data, indices)
     curr_data_slice = copy(data_slice)
 
     for i in 1:dim
