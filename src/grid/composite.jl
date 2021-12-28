@@ -40,7 +40,6 @@ struct Composite{T<:AbstractFloat,PG,SG} <: SimpleG.ClosedGrid
     subgrids::Vector{SG}
     inits::Vector{Int}
 
-    bottomtype::Symbol
 
 """
     function Composite{T,PG,SG}(panel, subgrids) where {T<:AbstractFloat,PG,SG}
@@ -73,19 +72,13 @@ in the whole grid.
         end
         size = length(grid)
 
-        if SG <: Composite
-            bottomtype = subgrids[1].bottomtype
-        elseif SG <: SimpleG.BaryCheb
-            bottomtype = :cheb
-        else
-            bottomtype = :default
-        end
-
-        return new{T,PG,SG}(bound, size, grid, panel, subgrids,inits, bottomtype)
+        return new{T,PG,SG}(bound, size, grid, panel, subgrids,inits)
     end
 
 end
 
+# function that returns the bottom type of the grid
+getbottomtype(grid::CompositeG.Composite{T,PG,SG}) where {T,PG,SG}=(SG<:CompositeG.Composite) ? (getbottomtype(grid.subgrids[1])) : (SG)
 
 """
     function Base.floor(grid::Composite{T,PG,SG}, x) where {T,PG,SG}

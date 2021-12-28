@@ -28,6 +28,7 @@ abstract type InterpNeighbor end
 struct LinearNeighbor{T<:AbstractFloat} <: InterpNeighbor
     index::SVector{2,Int}
     grid::SVector{2,T}
+    x::T
 end
 
 # for cheb interp, whole cheb grid is needed, together with interp weight
@@ -36,6 +37,7 @@ struct ChebNeighbor{T<:AbstractFloat} <: InterpNeighbor
     index::SVector{2,Int}
     grid::Vector{T}
     weight::Vector{T}
+    x::T
 end
 
 function findneighbor(xgrid::T, x; method=:default) where {T}
@@ -62,16 +64,16 @@ function findneighbor(::FloorInterp, xgrid, x)
 
     x0,x1 = xgrid[xi0], xgrid[xi1]
 
-    return LinearNeighbor{T}([xi0,xi1], [x0,x1])
+    return LinearNeighbor{T}([xi0,xi1], [x0,x1], x)
 end
 
 function findneighbor(::ChebInterp, xgrid, x)
     T = eltype(xgrid.grid)
-    return ChebNeighbor{T}([1,xgrid.size], xgrid.grid, xgrid.weight)
+    return ChebNeighbor{T}([1,xgrid.size], xgrid.grid, xgrid.weight, x)
 end
 
 function findneighbor(::CompositeInterp, xgrid, x)
-    if xgrid.bottomtype == :cheb
+    if CompositeG.getbottomtype(xgrid) <: SimpleG.BaryCheb
         T = eltype(xgrid.grid)
         curr=xgrid
         xi0 = 1
@@ -80,10 +82,50 @@ function findneighbor(::CompositeInterp, xgrid, x)
             xi0 += curr.inits[i]-1
             curr = curr.subgrids[i]
         end
-        return ChebNeighbor{T}([xi0,curr.size-1+xi0], curr.grid, curr.weight)
+        return ChebNeighbor{T}([xi0,curr.size-1+xi0], curr.grid, curr.weight, x)
     else
         return findneighbor(FloorInterp(), xgrid, x)
     end
+end
+
+function interpsliced(neighbor, data; axis=1)
+    if ndims(data) == 1
+        return _interpsliced(neighbor, data)
+    else
+        return dropdims(mapslices(u->_interpsliced(neighbor, u), data, dims=axis), dims=axis)
+    end
+end
+
+function _interpsliced(neighbor::LinearNeighbor, data)
+    # data should be sliced priorly
+    dx0, dx1 = neighbor.x - neighbor.grid[1], neighbor.grid[2] - neighbor.x
+
+    d0, d1 = data[1], data[2]
+
+    g = d0 * dx1 + d1 * dx0
+
+    gx = g / (dx0 + dx1) 
+    return gx
+end
+
+function _interpsliced(neighbor::ChebNeighbor, data)
+    # data should be sliced priorly
+    return SimpleG.barycheb(length(neighbor.grid), neighbor.x, data, neighbor.weight, neighbor.grid)
+end
+
+function interpND(data, xgrids, xs)
+    dim = length(xs)
+    neighbors = [findneighbor(xgrids[i], xs[i]) for i in 1:dim]
+    indices = [nei.index[1]:nei.index[2] for nei in neighbors]
+
+    data_slice = view(data, indices...)
+    curr_data_slice = copy(data_slice)
+
+    for i in 1:dim
+        curr_data_slice = interpsliced(neighbors[i], curr_data_slice; axis=i)
+    end
+
+    return curr_data_slice
 end
 
 """
