@@ -46,7 +46,7 @@ struct Arbitrary{T<:Real} <: ClosedGrid
 
 create Arbitrary from grid.
 """
-    function Arbitrary{T}(grid) where {T<:AbstractFloat}
+    function Arbitrary{T}(grid) where {T<:Real}
         bound = [grid[1],grid[end]]
         size = length(grid)
         weight = similar(grid)
