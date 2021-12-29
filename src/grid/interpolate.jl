@@ -51,12 +51,8 @@ the value of x on xgrid.
 - x: value to be interpolated
 - method: :default use optimized method, :linear use linear interp.
 """
-function findneighbor(xgrid::T, x; method=:default) where {T}
-    IS = InterpStyle(T)
-    if method == :linear
-        IS = FloorInterp()
-    end
-    return findneighbor(IS, xgrid, x)
+function findneighbor(xgrid::T, x; method=InterpStyle(T)) where {T}
+    return findneighbor(method, xgrid, x)
 end
 
 function findneighbor(::FloorInterp, xgrid, x)
@@ -104,6 +100,7 @@ end
 
 Return a view of data sliced on given axes with given indices.
 Works like view(data, (:, ..., :, i_1:f_1,  :, ..., i_n:f_n, :, ..., :)).
+Type unstable unless slice dims are constant.
 
 #Members:
 - data: data to be sliced.
@@ -111,6 +108,10 @@ Works like view(data, (:, ..., :, i_1:f_1,  :, ..., i_n:f_n, :, ..., :)).
 - indices: indices of slicing. accept UnitRange{Int} or Vector of UnitRange{Int} like 2:8 or [2:8, 3:7]
 """
 function dataslice(data, axes::Int, indices)
+    return selectdim(data, axes, indices[1])
+end
+
+function dataslice(data, axes::Int, indices::UnitRange{Int})
     return selectdim(data, axes, indices)
 end
 
@@ -148,6 +149,14 @@ function interpsliced(neighbor, data; axis=1)
     end
 end
 
+# function interpsliced(neighbor, data; axis=1)
+#     return dropdims(mapslices(u->_interpsliced(neighbor, u), data, dims=axis), dims=axis)
+# end
+
+# function interpsliced(neighbor, data::Vector; axis=1)
+#     return _interpsliced(neighbor, data)
+# end
+
 function _interpsliced(neighbor::LinearNeighbor, data)
     # data should be sliced priorly
     dx0, dx1 = neighbor.x - neighbor.grid[1], neighbor.grid[2] - neighbor.x
@@ -166,7 +175,7 @@ function _interpsliced(neighbor::ChebNeighbor, data)
 end
 
 
-function interpND(data, xgrids, xs; method=:linear)
+function interpND(data, xgrids, xs; method=FloorInterp())
     #WARNING: This function works but is not type stable
     dim = length(xs)
     neighbors = [findneighbor(xgrids[i], xs[i]; method) for i in 1:dim]
@@ -299,7 +308,7 @@ linear interpolation of data(x)
 end
 
 """
-    function interp1D(data, xgrid, x; axis=1, method=:default)
+    function interp1D(data, xgrid, x; axis=1, method=InterpStyle(T))
 
 linear interpolation of data(x) with single or multiple dimension.
 For 1D data, return a number; for multiple dimension, reduce the given axis.
@@ -315,7 +324,7 @@ function interp1D(data, xgrid::T, x; axis=1, method=InterpStyle(T)) where {T}
     return dropdims(mapslices(u->interp1D(method, u, xgrid, x), data, dims=axis), dims=axis)
 end
 
-function interp1D(data::Vector, xgrid::T, x; method=InterpStyle(T)) where {DT,T}
+function interp1D(data::Vector, xgrid::T, x;axis=1, method=InterpStyle(T)) where {DT,T}
     return interp1D(method, data, xgrid, x)
 end
 
@@ -366,7 +375,7 @@ end
 
 
 """
-    function interp1DGrid(data, xgrid, grid; axis=1, method=:default)
+    function interp1DGrid(data, xgrid, grid; axis=1, method=InterpStyle(T))
 For 1D data, do interpolation of data(grid[1:end]), return a Vector.
 For ND data, do interpolation of data(grid[1:end]) at given axis, return data of same dimension.
 
@@ -381,7 +390,7 @@ function interp1DGrid(data, xgrid::T, grid; axis=1, method=InterpStyle(T)) where
     return mapslices(u->interp1DGrid(method, u, xgrid, grid), data, dims=axis)
 end
 
-function interp1DGrid(data::Vector, xgrid::T, grid; method=InterpStyle(T)) where {T}
+function interp1DGrid(data::Vector, xgrid::T, grid; axis=1, method=InterpStyle(T)) where {T}
     return interp1DGrid(method, data, xgrid, grid)
 end
 
@@ -475,7 +484,7 @@ function integrate1D(data, xgrid::T; axis=1) where {T}
     return dropdims(mapslices(u->integrate1D(IntegrateStyle(T), u, xgrid), data, dims=axis), dims=axis)
 end
 
-function integrate1D(data::Vector, xgrid::T) where {T}
+function integrate1D(data::Vector, xgrid::T; axis=1) where {T}
     return integrate1D(IntegrateStyle(T), data, xgrid)
 end
 
