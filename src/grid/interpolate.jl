@@ -309,22 +309,14 @@ For 1D data, return a number; for multiple dimension, reduce the given axis.
 - data: one-dimensional array of data
 - x: x
 - axis: axis to be interpolated in data
-- method: by default use optimized method; use linear interp if :linear
+- method: by default use optimized method; use linear interp if Interp.FloorInterp()
 """
-function interp1D(data, xgrid::T, x; axis=1, method=:default) where {T}
-    IS = InterpStyle(T)
-    if method == :linear
-        IS = FloorInterp()
-    end
-    return dropdims(mapslices(u->interp1D(IS, u, xgrid, x), data, dims=axis), dims=axis)
+function interp1D(data, xgrid::T, x; axis=1, method=InterpStyle(T)) where {T}
+    return dropdims(mapslices(u->interp1D(method, u, xgrid, x), data, dims=axis), dims=axis)
 end
 
-function interp1D(data::Vector, xgrid::T, x; method=:default) where {DT,T}
-    IS = InterpStyle(T)
-    if method == :linear
-        IS = FloorInterp()
-    end
-    return interp1D(IS, data, xgrid, x)
+function interp1D(data::Vector, xgrid::T, x; method=InterpStyle(T)) where {DT,T}
+    return interp1D(method, data, xgrid, x)
 end
 
 """
@@ -385,16 +377,12 @@ For ND data, do interpolation of data(grid[1:end]) at given axis, return data of
 - axis: axis to be interpolated in data
 - method: by default use optimized method; use linear interp if :linear
 """
-function interp1DGrid(data, xgrid::T, grid; axis=1, method=:default) where {T}
-    IS = InterpStyle(T)
-    if method == :linear
-        IS = FloorInterp()
-    end
-    if ndims(data) == 1
-        return interp1DGrid(IS, data, xgrid, grid)
-    else
-        return mapslices(u->interp1DGrid(IS, u, xgrid, grid), data, dims=axis)
-    end
+function interp1DGrid(data, xgrid::T, grid; axis=1, method=InterpStyle(T)) where {T}
+    return mapslices(u->interp1DGrid(method, u, xgrid, grid), data, dims=axis)
+end
+
+function interp1DGrid(data::Vector, xgrid::T, grid; method=InterpStyle(T)) where {T}
+    return interp1DGrid(method, data, xgrid, grid)
 end
 
 """
@@ -484,12 +472,11 @@ For 1D data, return a number; for multiple dimension, reduce the given axis.
 - axis: axis to be integrated in data
 """
 function integrate1D(data, xgrid::T; axis=1) where {T}
-    if ndims(data) == 1
-        return integrate1D(IntegrateStyle(T), data, xgrid)
-    else
-        return dropdims(mapslices(u->integrate1D(IntegrateStyle(T), u, xgrid), data, dims=axis), dims=axis)
-    end
+    return dropdims(mapslices(u->integrate1D(IntegrateStyle(T), u, xgrid), data, dims=axis), dims=axis)
+end
 
+function integrate1D(data::Vector, xgrid::T) where {T}
+    return integrate1D(IntegrateStyle(T), data, xgrid)
 end
 
 """
