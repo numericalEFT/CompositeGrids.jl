@@ -302,7 +302,7 @@
 
         for ti = 1:tgrid.size - 1
             t = tgrid[ti] + 1.e-6
-            neighbor = Interp.findneighbor(Interp.FloorInterp(),tgrid, t)
+            neighbor = Interp.findneighbor(Interp.LinearInterp(),tgrid, t)
             @test neighbor.index[1] == floor(tgrid, t)
             @test neighbor.index[2] == floor(tgrid, t) + 1
 
@@ -316,7 +316,7 @@
         for ti = 2:tgrid.size
             t = tgrid[ti] - 1.e-6
             fbar = Interp.interp1D(data, tgrid, t)
-            neighbor = Interp.findneighbor(Interp.FloorInterp(),tgrid, t)
+            neighbor = Interp.findneighbor(Interp.LinearInterp(),tgrid, t)
             @test neighbor.index[1] == floor(tgrid, t)
             @test neighbor.index[2] == floor(tgrid, t) + 1
 

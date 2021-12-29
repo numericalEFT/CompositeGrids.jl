@@ -13,11 +13,11 @@ using StaticArrays, FastGaussQuadrature, CompositeGrids
 # using .CompositeG
 
 abstract type InterpStyle end
-struct FloorInterp <: InterpStyle end
+struct LinearInterp <: InterpStyle end
 struct ChebInterp <: InterpStyle end
 struct CompositeInterp <: InterpStyle end
 
-InterpStyle(::Type) = FloorInterp()
+InterpStyle(::Type) = LinearInterp()
 InterpStyle(::Type{<:SimpleG.BaryCheb}) = ChebInterp()
 InterpStyle(::Type{<:CompositeG.Composite}) = CompositeInterp()
 
@@ -55,7 +55,7 @@ function findneighbor(xgrid::T, x; method=InterpStyle(T)) where {T}
     return findneighbor(method, xgrid, x)
 end
 
-function findneighbor(::FloorInterp, xgrid, x)
+function findneighbor(::LinearInterp, xgrid, x)
     T = eltype(xgrid.grid)
     xi0,xi1 = 0,0
     if(x<=xgrid[firstindex(xgrid)])
@@ -91,7 +91,7 @@ function findneighbor(::CompositeInterp, xgrid, x)
         end
         return ChebNeighbor{T}(xi0:(curr.size-1+xi0), curr.grid, curr.weight, x)
     else
-        return findneighbor(FloorInterp(), xgrid, x)
+        return findneighbor(LinearInterp(), xgrid, x)
     end
 end
 
@@ -175,7 +175,7 @@ function _interpsliced(neighbor::ChebNeighbor, data)
 end
 
 
-function interpND(data, xgrids, xs; method=FloorInterp())
+function interpND(data, xgrids, xs; method=LinearInterp())
     #WARNING: This function works but is not type stable
     dim = length(xs)
     neighbors = [findneighbor(xgrids[i], xs[i]; method) for i in 1:dim]
@@ -318,7 +318,7 @@ For 1D data, return a number; for multiple dimension, reduce the given axis.
 - data: one-dimensional array of data
 - x: x
 - axis: axis to be interpolated in data
-- method: by default use optimized method; use linear interp if Interp.FloorInterp()
+- method: by default use optimized method; use linear interp if Interp.LinearInterp()
 """
 function interp1D(data, xgrid::T, x; axis=1, method=InterpStyle(T)) where {T}
     return dropdims(mapslices(u->interp1D(method, u, xgrid, x), data, dims=axis), dims=axis)
@@ -329,7 +329,7 @@ function interp1D(data::Vector, xgrid::T, x;axis=1, method=InterpStyle(T)) where
 end
 
 """
-    function interp1D(::FloorInterp,data, xgrid, x)
+    function interp1D(::LinearInterp,data, xgrid, x)
 
 linear interpolation of data(x), use floor and linear1D
 
@@ -338,7 +338,7 @@ linear interpolation of data(x), use floor and linear1D
 - data: one-dimensional array of data
 - x: x
 """
-function interp1D(::FloorInterp,data, xgrid, x)
+function interp1D(::LinearInterp,data, xgrid, x)
     return linear1D(data, xgrid, x)
 end
 
@@ -395,7 +395,7 @@ function interp1DGrid(data::Vector, xgrid::T, grid; axis=1, method=InterpStyle(T
 end
 
 """
-    function interp1DGrid(::Union{FloorInterp,ChebInterp}, data, xgrid, grid)
+    function interp1DGrid(::Union{LinearInterp,ChebInterp}, data, xgrid, grid)
 
 linear interpolation of data(grid[1:end]), return a Vector
 simply call interp1D on each points
@@ -405,7 +405,7 @@ simply call interp1D on each points
 - data: one-dimensional array of data
 - grid: points to be interpolated on
 """
-function interp1DGrid(::Union{FloorInterp,ChebInterp}, data, xgrid, grid)
+function interp1DGrid(::Union{LinearInterp,ChebInterp}, data, xgrid, grid)
     ff = zeros(eltype(data), length(grid))
     for (xi, x) in enumerate(grid)
         ff[xi] = interp1D(data, xgrid, x)
