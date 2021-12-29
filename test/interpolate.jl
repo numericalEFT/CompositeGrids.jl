@@ -110,6 +110,52 @@
         end
     end
 
+    @testset "interpND" begin
+        β = π
+        tgrid = SimpleGrid.Uniform{Float64}([0.0, β], 22)
+        # tugrid = Grid.Uniform{Float64,33}(0.0, β, (true, true))
+        # kugrid = Grid.Uniform{Float64,33}(0.0, maxK, (true, true))
+        f(t1,t2) = 1.0+t1+t2+t1*t2
+        data = zeros((tgrid.size,tgrid.size))
+
+        for (ti, t) in enumerate(tgrid.grid)
+            for (di, d) in enumerate(tgrid.grid)
+                data[ti, di] = f(t,d)
+            end
+        end
+
+        for ti = 1:tgrid.size - 1
+            for di = 1:tgrid.size - 1
+                t = tgrid[ti] + 1.e-6
+                d = tgrid[di] + 1.e-6
+                fbar = Interp.interpND(data, [tgrid,tgrid], [t,d])
+                @test abs(f(tgrid[ti],tgrid[di]) - fbar) < 9.e-6 # linear interpolation, so error is dδt+tδd+δt+δd
+                @test f(tgrid[ti],tgrid[di]) < fbar
+                @test f(tgrid[ti + 1],tgrid[di+1]) > fbar
+            end
+        end
+        for ti = 2:tgrid.size
+            for di = 2:tgrid.size
+                t = tgrid[ti] - 1.e-6
+                d = tgrid[di] - 1.e-6
+                fbar = Interp.interpND(data, [tgrid,tgrid], [t,d])
+                @test abs(f(tgrid[ti],tgrid[di]) - fbar) < 9.e-6 # linear interpolation, so error is dδt+tδd+δt+δd
+                @test f(tgrid[ti],tgrid[di]) > fbar
+                @test f(tgrid[ti - 1],tgrid[di - 1]) < fbar
+            end
+        end
+
+        tlist = rand(10) * β
+        dlist = rand(10) * β
+        # println(tlist)
+
+        for (ti, t) in enumerate(tlist)
+            for (di, d) in enumerate(tlist)
+                fbar = Interp.interpND(data, [tgrid,tgrid], [t,d])
+                @test abs(f(t,d) - fbar) < 9.e-6 # linear interpolation, so error is δK+δt
+            end
+        end
+    end
 
     @testset "BaryCheb" begin
         β = π
@@ -241,5 +287,56 @@
         @test abs(int_result[1] - 0.5) < 3.e-6
         @test abs(int_result[2] - 0.5) < 3.e-6
     end
+
+    @testset "Find Neighbor and Interp Sliced" begin
+        β = 4
+        tgrid = CompositeGrid.LogDensedGrid(:cheb, [0.0, β], [0.0, 0.5β, β], 4, 0.001, 4)
+        # tugrid = Grid.Uniform{Float64,33}(0.0, β, (true, true))
+        # kugrid = Grid.Uniform{Float64,33}(0.0, maxK, (true, true))
+        f(t) = t
+        data = zeros(tgrid.size)
+
+        for (ti, t) in enumerate(tgrid.grid)
+            data[ti] = f(t)
+        end
+
+        for ti = 1:tgrid.size - 1
+            t = tgrid[ti] + 1.e-6
+            neighbor = Interp.findneighbor(Interp.LinearInterp(),tgrid, t)
+            @test neighbor.index[1] == floor(tgrid, t)
+            @test neighbor.index[2] == floor(tgrid, t) + 1
+
+            neighbor = Interp.findneighbor(tgrid, t)
+            data_slice = Interp.dataslice(data,neighbor.index)#data[neighbor.index[1]:neighbor.index[2]]
+            fbar = Interp.interpsliced(neighbor, data_slice)
+            @test abs(f(tgrid[ti]) - fbar) < 3.e-6 # linear interpolation, so error is δK+δt
+            @test f(tgrid[ti]) < fbar
+            @test f(tgrid[ti + 1]) > fbar
+        end
+        for ti = 2:tgrid.size
+            t = tgrid[ti] - 1.e-6
+            fbar = Interp.interp1D(data, tgrid, t)
+            neighbor = Interp.findneighbor(Interp.LinearInterp(),tgrid, t)
+            @test neighbor.index[1] == floor(tgrid, t)
+            @test neighbor.index[2] == floor(tgrid, t) + 1
+
+            neighbor = Interp.findneighbor(tgrid, t)
+            data_slice = Interp.dataslice(data,neighbor.index)#data[neighbor.index[1]:neighbor.index[2]]
+            fbar = Interp.interpsliced(neighbor, data_slice)
+            @test abs(f(tgrid[ti]) - fbar) < 3.e-6 # linear interpolation, so error is δK+δt
+            @test f(tgrid[ti]) > fbar
+            @test f(tgrid[ti - 1]) < fbar
+        end
+
+        t = tgrid[1] + eps(Float64)*1e3
+        fbar = Interp.interp1D(data, tgrid, t)
+        @test abs(f(t) - fbar) < 3.e-6 # linear interpolation, so error is δK+δt
+
+        t = tgrid[tgrid.size] - eps(Float64)*1e3
+        fbar = Interp.interp1D(data, tgrid, t)
+        @test abs(f(t) - fbar) < 3.e-6 # linear interpolation, so error is δK+δt
+
+    end
+
 end
 

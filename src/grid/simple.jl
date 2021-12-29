@@ -20,7 +20,6 @@ abstract type AbstractGrid end
 abstract type OpenGrid <: AbstractGrid end
 abstract type ClosedGrid <: AbstractGrid end
 
-
 """
 
     struct Arbitrary{T<:AbstractFloat} <: ClosedGrid
@@ -36,21 +35,21 @@ Arbitrary grid generated from given sorted grid.
 #Constructor:
 -    function Arbitrary{T}(grid) where {T<:AbstractFloat}
 """
-struct Arbitrary{T<:AbstractFloat} <: ClosedGrid
+struct Arbitrary{T<:Real} <: ClosedGrid
     bound::SVector{2,T}
     size::Int
     grid::Vector{T}
-    weight::Vector{T}
+    weight::Vector{Float64}
 
 """
     function Arbitrary{T}(grid) where {T<:AbstractFloat}
 
 create Arbitrary from grid.
 """
-    function Arbitrary{T}(grid) where {T<:AbstractFloat}
+    function Arbitrary{T}(grid) where {T<:Real}
         bound = [grid[1],grid[end]]
         size = length(grid)
-        weight = similar(grid)
+        weight = zeros(Float64, size)
         for i in 1:size
             if i==1
                 weight[1] = 0.5*(grid[2]-grid[1])
@@ -83,6 +82,7 @@ function Base.floor(grid::AbstractGrid, x) #where {T}
     return Base.floor(Int, result)
 end
 
+Base.length(grid::AbstractGrid) = grid.size
 Base.size(grid::AbstractGrid) = grid.size
 Base.show(io::IO, grid::AbstractGrid) = print(io, grid.grid)
 Base.view(grid::AbstractGrid, inds...) where {N} = Base.view(grid.grid, inds...)
