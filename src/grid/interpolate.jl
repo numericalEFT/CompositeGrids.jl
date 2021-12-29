@@ -40,6 +40,17 @@ struct ChebNeighbor{T<:AbstractFloat} <: InterpNeighbor
     x::T
 end
 
+"""
+    function findneighbor(xgrid::T, x; method=:default) where {T}
+
+Find neighbor grid points and related information for extrapolating
+the value of x on xgrid.
+
+#Members:
+- xgrid: grid to be interpolated
+- x: value to be interpolated
+- method: :default use optimized method, :linear use linear interp.
+"""
 function findneighbor(xgrid::T, x; method=:default) where {T}
     IS = InterpStyle(T)
     if method == :linear
@@ -88,12 +99,23 @@ function findneighbor(::CompositeInterp, xgrid, x)
     end
 end
 
+"""
+    function dataslice(data, axes, indices)
+
+Return a view of data sliced on given axes with given indices.
+Works like view(data, (:, ..., :, i_1:f_1,  :, ..., i_n:f_n, :, ..., :)).
+
+#Members:
+- data: data to be sliced.
+- axes: axes to be sliced. accept Int or NTuple{DIM, Int} for single or multiple axes. when omitted, assume all axes.
+- indices: indices of slicing. accept UnitRange{Int} or Vector of UnitRange{Int} like 2:8 or [2:8, 3:7]
+"""
 function dataslice(data, axes::Int, indices)
     return selectdim(data, axes, indices)
 end
 
 function dataslice(data, axes::NTuple{DIM,Int}, indices) where {DIM}
-    @assert DIM == length(indices)
+    # @assert DIM == length(indices)
     slice = data
     for i in 1:DIM
         slice = selectdim(slice, axes[i], indices[i])
@@ -101,20 +123,23 @@ function dataslice(data, axes::NTuple{DIM,Int}, indices) where {DIM}
     return slice
 end
 
-function dataslice(data, indices)
-    DIM = ndims(data)
-    if DIM!=1
-        @assert DIM == length(indices)
-    # slice = data
-    # for i in 1:DIM
-    #     slice = selectdim(slice, i, indices[i])
-    # end
-        return view(data, indices...)
-    else
-        return view(data, indices)
-    end
+@inline function dataslice(data, indices::UnitRange{Int})
+    return view(data, indices)
 end
 
+@inline function dataslice(data, indices::Vector{UnitRange{Int}})
+    return view(data, indices...)
+end
+
+"""
+    function interpsliced(neighbor, data; axis=1)
+Interpolate with given neighbor and sliced data. Assume data already sliced on given axis.
+
+#Members:
+- neighbor: neighbor from findneighbor()
+- data: sliced data
+- axis: axis sliced and to be interpolated
+"""
 function interpsliced(neighbor, data; axis=1)
     if ndims(data) == 1
         return _interpsliced(neighbor, data)
@@ -140,19 +165,22 @@ function _interpsliced(neighbor::ChebNeighbor, data)
     return SimpleG.barycheb(length(neighbor.grid), neighbor.x, data, neighbor.weight, neighbor.grid)
 end
 
+
 function interpND(data, xgrids, xs; method=:linear)
+    #WARNING: This function works but is not type stable
     dim = length(xs)
     neighbors = [findneighbor(xgrids[i], xs[i]; method) for i in 1:dim]
     indices = [nei.index for nei in neighbors]
 
-    data_slice = dataslice(data, indices)
+    # data_slice = dataslice(data, indices)
+    data_slice = view(data, indices...)
     curr_data_slice = copy(data_slice)
 
-    for i in 1:dim
-        curr_data_slice = interpsliced(neighbors[i], curr_data_slice; axis=i)
+    for i in 1:dim-1
+        curr_data_slice = interpsliced(neighbors[i], curr_data_slice)
     end
 
-    return curr_data_slice
+    return interpsliced(neighbors[dim], curr_data_slice)
 end
 
 """
@@ -288,11 +316,15 @@ function interp1D(data, xgrid::T, x; axis=1, method=:default) where {T}
     if method == :linear
         IS = FloorInterp()
     end
-    if ndims(data) == 1
-        return interp1D(IS, data, xgrid, x)
-    else
-        return dropdims(mapslices(u->interp1D(IS, u, xgrid, x), data, dims=axis), dims=axis)
+    return dropdims(mapslices(u->interp1D(IS, u, xgrid, x), data, dims=axis), dims=axis)
+end
+
+function interp1D(data::Vector, xgrid::T, x; method=:default) where {DT,T}
+    IS = InterpStyle(T)
+    if method == :linear
+        IS = FloorInterp()
     end
+    return interp1D(IS, data, xgrid, x)
 end
 
 """
