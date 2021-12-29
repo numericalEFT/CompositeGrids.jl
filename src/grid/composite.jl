@@ -22,7 +22,6 @@ PG should always be ClosedGrid, while SG could be any grid.
 - `panel` : panel grid
 - `subgrids` : a vector of subgrids
 - `inits` : index of the first grid point of a subgrid on the whole grid
-- `bottomtype` : type of bottom layer
 
 #Constructor:
 -    function Composite{T,PG,SG}(panel, subgrids) where {T<:AbstractFloat,PG,SG}
