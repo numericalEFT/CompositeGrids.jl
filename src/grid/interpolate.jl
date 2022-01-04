@@ -16,6 +16,9 @@ abstract type InterpStyle end
 struct LinearInterp <: InterpStyle end
 struct ChebInterp <: InterpStyle end
 struct CompositeInterp <: InterpStyle end
+const LINEARINTERP = LinearInterp()
+const CHEBINTERP = ChebInterp()
+const COMPOSITEINTERP = CompositeInterp()
 
 InterpStyle(::Type) = LinearInterp()
 InterpStyle(::Type{<:SimpleG.BaryCheb}) = ChebInterp()
@@ -142,19 +145,30 @@ Interpolate with given neighbor and sliced data. Assume data already sliced on g
 - axis: axis sliced and to be interpolated
 """
 function interpsliced(neighbor, data; axis=1)
-    if ndims(data) == 1
-        return _interpsliced(neighbor, data)
+    return dropdims(mapslices(u->_interpsliced(neighbor, u), data, dims=axis), dims=axis)
+end
+
+function interpsliced(neighbor, data::AbstractMatrix; axis=1)
+    # trying to make it type stable for matrix
+    if axis == 1
+        return map(u->_interpsliced(neighbor,u), eachcol(data))
+    elseif axis == 2
+        return map(u->_interpsliced(neighbor,u), eachrow(data))
     else
-        return dropdims(mapslices(u->_interpsliced(neighbor, u), data, dims=axis), dims=axis)
+        throw(DomainError(axis, "axis should be 1 or 2 for Matrix"))
     end
 end
 
-# function interpsliced(neighbor, data; axis=1)
-#     return dropdims(mapslices(u->_interpsliced(neighbor, u), data, dims=axis), dims=axis)
-# end
+function interpsliced(neighbor, data::AbstractVector; axis=1)
+    return _interpsliced(neighbor, data)
+end
 
-# function interpsliced(neighbor, data::Vector; axis=1)
-#     return _interpsliced(neighbor, data)
+# function interpsliced(neighbor, data; axis=1)
+#     if ndims(data) == 1
+#         return _interpsliced(neighbor, data)
+#     else
+#         return dropdims(mapslices(u->_interpsliced(neighbor, u), data, dims=axis), dims=axis)
+#     end
 # end
 
 function _interpsliced(neighbor::LinearNeighbor, data)
@@ -175,7 +189,7 @@ function _interpsliced(neighbor::ChebNeighbor, data)
 end
 
 
-function interpND(data, xgrids, xs; method=LinearInterp())
+function interpND(data, xgrids, xs; method=LINEARINTERP)
     #WARNING: This function works but is not type stable
     dim = length(xs)
     neighbors = [findneighbor(xgrids[i], xs[i]; method) for i in 1:dim]
@@ -399,7 +413,18 @@ function interp1D(data, xgrid::T, x; axis=1, method=InterpStyle(T)) where {T}
     return dropdims(mapslices(u->interp1D(method, u, xgrid, x), data, dims=axis), dims=axis)
 end
 
-function interp1D(data::Vector, xgrid::T, x;axis=1, method=InterpStyle(T)) where {DT,T}
+function interp1D(data::AbstractMatrix, xgrid::T, x; axis=1, method=InterpStyle(T)) where {T}
+    # trying to make it type stable for matrix
+    if axis == 1
+        return map(u->interp1D(method, u, xgrid, x), eachcol(data))
+    elseif axis == 2
+        return map(u->interp1D(method, u, xgrid, x), eachrow(data))
+    else
+        throw(DomainError(axis, "axis should be 1 or 2 for Matrix"))
+    end
+end
+
+function interp1D(data::AbstractVector, xgrid::T, x;axis=1, method=InterpStyle(T)) where {DT,T}
     return interp1D(method, data, xgrid, x)
 end
 
@@ -465,7 +490,7 @@ function interp1DGrid(data, xgrid::T, grid; axis=1, method=InterpStyle(T)) where
     return mapslices(u->interp1DGrid(method, u, xgrid, grid), data, dims=axis)
 end
 
-function interp1DGrid(data::Vector, xgrid::T, grid; axis=1, method=InterpStyle(T)) where {T}
+function interp1DGrid(data::AbstractVector, xgrid::T, grid; axis=1, method=InterpStyle(T)) where {T}
     return interp1DGrid(method, data, xgrid, grid)
 end
 
@@ -535,6 +560,9 @@ abstract type IntegrateStyle end
 struct WeightIntegrate <: IntegrateStyle end
 struct NoIntegrate <: IntegrateStyle end
 struct CompositeIntegrate <: IntegrateStyle end
+const WEIGHTINTEGRATE = WeightIntegrate()
+const NOINTEGRATE = NoIntegrate()
+const COMPOSITEINTEGRATE = CompositeIntegrate()
 
 IntegrateStyle(::Type) = NoIntegrate()
 IntegrateStyle(::Type{<:SimpleG.GaussLegendre}) = WeightIntegrate()
@@ -559,7 +587,17 @@ function integrate1D(data, xgrid::T; axis=1) where {T}
     return dropdims(mapslices(u->integrate1D(IntegrateStyle(T), u, xgrid), data, dims=axis), dims=axis)
 end
 
-function integrate1D(data::Vector, xgrid::T; axis=1) where {T}
+function integrate1D(data::AbstractMatrix, xgrid::T; axis=1) where {T}
+    if axis == 1
+        return map(u->integrate1D(IntegrateStyle(T), u, xgrid), eachcol(data))
+    elseif axis == 2
+        return map(u->integrate1D(IntegrateStyle(T), u, xgrid), eachrow(data))
+    else
+        throw(DomainError(axis, "axis should be 1 or 2 for Matrix"))
+    end
+end
+
+function integrate1D(data::AbstractVector, xgrid::T; axis=1) where {T}
     return integrate1D(IntegrateStyle(T), data, xgrid)
 end
 
