@@ -612,15 +612,14 @@ works for grids that do not have integration weight stored
 - data: one-dimensional array of data
 """
 function integrate1D(::NoIntegrate, data, xgrid)
-    return 0.0
     result = eltype(data)(0.0)
 
     grid = xgrid.grid
     for i in 1:xgrid.size
         if i==1
-            weight = 0.5*(grid[2]-grid[1])
+            weight = 0.5*(grid[2]-xgrid.bound[1])
         elseif i==xgrid.size
-            weight = 0.5*(grid[end]-grid[end-1])
+            weight = 0.5*(xgrid.bound[2]-grid[end-1])
         else
             weight = 0.5*(grid[i+1]-grid[i-1])
         end
@@ -668,6 +667,107 @@ function integrate1D(::CompositeIntegrate, data, xgrid)
     end
     return result
 
+end
+
+"""
+    function integrate1DRange(data, xgrid, range; axis=1)
+
+calculate integration of data[i] on xgrid.
+For 1D data, return a number; for multiple dimension, reduce the given axis.
+
+#Arguments:
+- xgrid: one-dimensional grid of x
+- data: one-dimensional array of data
+- range: range of integration, [init, fin] within bound of xgrid.
+- axis: axis to be integrated in data
+"""
+function integrate1DRange(data, xgrid::T, range; axis=1) where {T}
+    return dropdims(mapslices(u->integrate1DRange(IntegrateStyle(T), u, xgrid, range), data, dims=axis), dims=axis)
+end
+
+function integrate1DRange(data::AbstractMatrix, xgrid::T, range; axis=1) where {T}
+    if axis == 1
+        return map(u->integrate1DRange(IntegrateStyle(T), u, xgrid, range), eachcol(data))
+    elseif axis == 2
+        return map(u->integrate1DRange(IntegrateStyle(T), u, xgrid, range), eachrow(data))
+    else
+        throw(DomainError(axis, "axis should be 1 or 2 for Matrix"))
+    end
+end
+
+function integrate1DRange(data::AbstractVector, xgrid::T, range; axis=1) where {T}
+    return integrate1DRange(IntegrateStyle(T), data, xgrid, range)
+end
+
+@inline function trapezoidInt(data, grid, range)
+    return (0.5*(range[1]+range[2])*(data[2]-data[1]) - grid[1]*data[2] + grid[2]*data[1])/(grid[2]-grid[1])*(range[2]-range[1])
+end
+
+function integrate1DRange(::NoIntegrate, data, xgrid, range)
+    sign, x1, x2 = (range[1]<range[2]) ? (1.0, range[1], range[2]) : (-1.0, range[2], range[1])
+    @assert xgrid.bound[1] <= x1 <= x2 <= xgrid.bound[2]
+    xi1, xi2 = floor(xgrid, x1), floor(xgrid, x2)
+
+    result = eltype(data)(0.0)
+
+    grid = xgrid.grid
+    # g[xi1], x1, g[xi1+1], g[xi1+2], ... , g[xi2], x2
+    if xi1 == xi2
+        result += trapezoidInt(data[xi1:xi1+1],grid[xi1:xi1+1],[x1, x2])
+    else
+        for i in xi1:xi2
+            if i==xi1
+                result += trapezoidInt(data[i:i+1],grid[i:i+1],[x1,grid[i+1]])
+            elseif i==xi2
+                result += trapezoidInt(data[i:i+1],grid[i:i+1],[grid[i],x2])
+            else
+                result += 0.5*(data[i]+data[i+1])*(grid[i+1]-grid[i])
+            end
+        end
+    end
+    return result*sign
+end
+
+function integrate1DRange(::WeightIntegrate, data, xgrid, range)
+    return integrate1DRange(NoIntegrate(), data, xgrid, range)
+    # may give bad result for GaussLegendre grid
+    # sign, x1, x2 = (range[1]<range[2]) ? (1.0, range[1], range[2]) : (-1.0, range[2], range[1])
+    # @assert xgrid.bound[1] <= x1 <= x2 <= xgrid.bound[2]
+    # xi1, xi2 = floor(xgrid, x1), floor(xgrid, x2)
+
+    # result = eltype(data)(0.0)
+    # grid=xgrid.grid
+    # for i in xi1+1:xi2
+    #     if i==xi1+1
+    #         weight = 0.5*(grid[i+1]-x1)
+    #     elseif i==xi2
+    #         weight = 0.5*(x2-grid[xi2])
+    #     else
+    #         weight = xgrid.weight[i]
+    #     end
+    #     result += data[i]*weight
+    # end
+    # return result*sign
+end
+
+function integrate1DRange(::CompositeIntegrate, data, xgrid, range)
+    sign, x1, x2 = (range[1]<range[2]) ? (1.0, range[1], range[2]) : (-1.0, range[2], range[1])
+    @assert xgrid.bound[1] <= x1 <= x2 <= xgrid.bound[2]
+    pi1, pi2 = floor(xgrid.panel, x1), floor(xgrid.panel, x2)
+
+    result = eltype(data)(0.0)
+
+    for pi in pi1:pi2
+        head, tail = xgrid.inits[pi], xgrid.inits[pi]+xgrid.subgrids[pi].size-1
+        if pi == pi1
+            result += integrate1DRange(data[head:tail], xgrid.subgrids[pi], [x1,xgrid.subgrids[pi].bound[2]])
+        elseif pi == pi2
+            result += integrate1DRange(data[head:tail], xgrid.subgrids[pi], [xgrid.subgrids[pi].bound[1],x2])
+        else
+            result += integrate1D( data[head:tail],xgrid.subgrids[pi])
+        end
+    end
+    return result*sign
 end
 
 end

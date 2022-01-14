@@ -148,7 +148,7 @@ return 1 for x<grid[1] and grid.size-1 for x>grid[end].
 """
 function Base.floor(grid::Uniform{T}, x) where {T}
     result = (x-grid.grid[1])/(grid.grid[end]-grid.grid[1])*(grid.size-1)+1
-    if result <=0
+    if result <1
         return 1
     elseif result >= grid.size
         return grid.size-1

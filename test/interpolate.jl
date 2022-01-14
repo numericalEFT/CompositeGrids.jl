@@ -286,6 +286,25 @@
         int_result = Interp.integrate1D(data, tgrid; axis=2)
         @test abs(int_result[1] - 0.5) < 3.e-6
         @test abs(int_result[2] - 0.5) < 3.e-6
+
+        β = 1.0
+        # tgrid = CompositeGrid.LogDensedGrid(:uniform, [0.0, β], [0.0, 0.5β, β], 2, 0.001, 3)
+        tgrid = SimpleGrid.Uniform{Float64}([0.0, β], 11)
+        println(tgrid.grid)
+        data = zeros(tgrid.size)
+        for (ti, t) in enumerate(tgrid.grid)
+            data[ti] = f(t)
+        end
+
+        N=1
+        testpoints = rand(N,2)*β
+        for i in 10:N
+            int_result = Interp.integrate1DRange(data, tgrid, testpoints[i,:])
+            analytic = 0.5*(testpoints[i,2]^2-testpoints[i,1]^2)
+            println(testpoints[i,:])
+            println(int_result, ",", analytic)
+            @test abs(int_result - analytic) < 3.e-6
+        end
     end
 
     @testset "Find Neighbor and Interp Sliced" begin
