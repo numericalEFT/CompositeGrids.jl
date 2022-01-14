@@ -83,7 +83,7 @@
    - g.bound gives the boundary of the interval of the grid.
    - g.size gives the total number of grid points.
    - g.grid gives the array of grid points.
-   - g[i] returns the i-th grid points, same as g.grid[i].
+   - g[i] returns the i-th grid point, same as g.grid[i].
    - floor(g, x) returns the largest index of grid point where g[i]<x. Return 1 for x<g[1] and (grid.size-1) for x>g[end], so that both floor() and (floor()+1) are valid grid indices.
 
    Interpolation and integration are also provided, with different implemented functions for different grids.
