@@ -756,15 +756,20 @@ function integrate1DRange(::CompositeIntegrate, data, xgrid, range)
     pi1, pi2 = floor(xgrid.panel, x1), floor(xgrid.panel, x2)
 
     result = eltype(data)(0.0)
-
-    for pi in pi1:pi2
+    if pi1==pi2
+        pi = pi1
         head, tail = xgrid.inits[pi], xgrid.inits[pi]+xgrid.subgrids[pi].size-1
-        if pi == pi1
-            result += integrate1DRange(data[head:tail], xgrid.subgrids[pi], [x1,xgrid.subgrids[pi].bound[2]])
-        elseif pi == pi2
-            result += integrate1DRange(data[head:tail], xgrid.subgrids[pi], [xgrid.subgrids[pi].bound[1],x2])
-        else
-            result += integrate1D( data[head:tail],xgrid.subgrids[pi])
+        result += integrate1DRange(data[head:tail], xgrid.subgrids[pi], [x1,x2])
+    else
+        for pi in pi1:pi2
+            head, tail = xgrid.inits[pi], xgrid.inits[pi]+xgrid.subgrids[pi].size-1
+            if pi == pi1
+                result += integrate1DRange(data[head:tail], xgrid.subgrids[pi], [x1,xgrid.subgrids[pi].bound[2]])
+            elseif pi == pi2
+                result += integrate1DRange(data[head:tail], xgrid.subgrids[pi], [xgrid.subgrids[pi].bound[1],x2])
+            else
+                result += integrate1D( data[head:tail],xgrid.subgrids[pi])
+            end
         end
     end
     return result*sign

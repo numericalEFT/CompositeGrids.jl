@@ -288,21 +288,25 @@
         @test abs(int_result[2] - 0.5) < 3.e-6
 
         β = 1.0
-        # tgrid = CompositeGrid.LogDensedGrid(:uniform, [0.0, β], [0.0, 0.5β, β], 2, 0.001, 3)
-        tgrid = SimpleGrid.Uniform{Float64}([0.0, β], 11)
-        println(tgrid.grid)
+        tgrid = CompositeGrid.LogDensedGrid(:uniform, [0.0, β], [0.0, 0.5β, β], 20, 0.001, 20)
+        # tgrid = SimpleGrid.Uniform{Float64}([0.0, β], 11)
+        # println(tgrid.grid)
+        # g(t) = t^2
+        # G(t) = t^3/3.0
+        g(t) = cos(t)
+        G(t) = sin(t)
         data = zeros(tgrid.size)
         for (ti, t) in enumerate(tgrid.grid)
-            data[ti] = f(t)
+            data[ti] = g(t)
         end
 
-        N=1
+        N=100
         testpoints = rand(N,2)*β
-        for i in 10:N
+        for i in 1:N
             int_result = Interp.integrate1DRange(data, tgrid, testpoints[i,:])
-            analytic = 0.5*(testpoints[i,2]^2-testpoints[i,1]^2)
-            println(testpoints[i,:])
-            println(int_result, ",", analytic)
+            analytic = G(testpoints[i,2])-G(testpoints[i,1])
+            # println(testpoints[i,:])
+            # println(int_result, ",", analytic)
             @test abs(int_result - analytic) < 3.e-6
         end
     end
