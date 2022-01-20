@@ -22,6 +22,36 @@ function barychebinit(n)
     return x, w
 end
 
+function vandermonde(x)
+    n = length(x)
+    vmat = zeros(Float64, (n, n))
+    for i in 1:n
+        for j in 1:n
+            vmat[i,j] = x[i]^(j-1)
+        end
+    end
+    return vmat
+end
+
+function weightcoef(a, i::Int, n)
+    # integrate when i=1; differentiate when i=-1
+    b = zeros(Float64, n)
+    for j in 1:n
+        if j+i-1 > 0
+            b[j] = a^(j+i-1)/(j+i-1)
+        elseif j+i-1 == 0
+            b[j] = 1
+        else
+            b[j] = 0
+        end
+    end
+    return b
+end
+
+@inline function calcweight(invmat, b)
+    return invmat*b
+end
+
 """
 function barycheb(n, x, f, wc, xc)
 
@@ -70,3 +100,16 @@ function barycheb2(n, x, f, wc, xc)
     end
     return num ./ den
 end
+
+function chebint(n, a, b, f, invmat)
+    wc = weightcoef(b, 1, n) .- weightcoef(a, 1, n)
+    intw = calcweight(invmat, wc)
+    return sum(intw .* f)
+end
+
+function chebdiff(n, a, b, f, invmat)
+    B = weightcoef(b, -1, n) .- weightcoef(a, -1, n)
+    intw = calcweight(invmat, b)
+    return sum(intw .* f)
+end
+

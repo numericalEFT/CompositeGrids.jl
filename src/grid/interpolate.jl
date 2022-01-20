@@ -560,11 +560,14 @@ abstract type IntegrateStyle end
 struct WeightIntegrate <: IntegrateStyle end
 struct NoIntegrate <: IntegrateStyle end
 struct CompositeIntegrate <: IntegrateStyle end
+struct ChebIntegrate <: IntegrateStyle end
 const WEIGHTINTEGRATE = WeightIntegrate()
 const NOINTEGRATE = NoIntegrate()
 const COMPOSITEINTEGRATE = CompositeIntegrate()
+const CHEBINTEGRATE = ChebIntegrate()
 
 IntegrateStyle(::Type) = NoIntegrate()
+IntegrateStyle(::Type{<:SimpleG.BaryCheb}) = ChebIntegrate()
 IntegrateStyle(::Type{<:SimpleG.GaussLegendre}) = WeightIntegrate()
 IntegrateStyle(::Type{<:SimpleG.Uniform}) = WeightIntegrate()
 IntegrateStyle(::Type{<:SimpleG.Arbitrary}) = WeightIntegrate()
@@ -648,6 +651,21 @@ function integrate1D(::WeightIntegrate, data, xgrid)
 end
 
 """
+    function integrate1D(::ChebIntegrate, data, xgrid)
+
+calculate integration of data[i] on xgrid
+works for grids that have integration weight stored
+
+#Arguments:
+- xgrid: one-dimensional grid of x
+- data: one-dimensional array of data
+"""
+function integrate1D(::ChebIntegrate, data, xgrid)
+    a, b = xgrid.bound[1], xgrid.bound[2]
+    return SimpleG.chebint(xgrid.size, -1.0, 1.0, data, xgrid.invVandermonde)*(b-a)/2.0
+end
+
+"""
     function integrate1D(::CompositeIntegrate, data, xgrid)
 
 calculate integration of data[i] on xgrid
@@ -670,7 +688,7 @@ function integrate1D(::CompositeIntegrate, data, xgrid)
 end
 
 """
-    function integrate1DRange(data, xgrid, range; axis=1)
+    function integrate1D(data, xgrid, range; axis=1)
 
 calculate integration of data[i] on xgrid.
 For 1D data, return a number; for multiple dimension, reduce the given axis.
@@ -681,29 +699,29 @@ For 1D data, return a number; for multiple dimension, reduce the given axis.
 - range: range of integration, [init, fin] within bound of xgrid.
 - axis: axis to be integrated in data
 """
-function integrate1DRange(data, xgrid::T, range; axis=1) where {T}
-    return dropdims(mapslices(u->integrate1DRange(IntegrateStyle(T), u, xgrid, range), data, dims=axis), dims=axis)
+function integrate1D(data, xgrid::T, range; axis=1) where {T}
+    return dropdims(mapslices(u->integrate1D(IntegrateStyle(T), u, xgrid, range), data, dims=axis), dims=axis)
 end
 
-function integrate1DRange(data::AbstractMatrix, xgrid::T, range; axis=1) where {T}
+function integrate1D(data::AbstractMatrix, xgrid::T, range; axis=1) where {T}
     if axis == 1
-        return map(u->integrate1DRange(IntegrateStyle(T), u, xgrid, range), eachcol(data))
+        return map(u->integrate1D(IntegrateStyle(T), u, xgrid, range), eachcol(data))
     elseif axis == 2
-        return map(u->integrate1DRange(IntegrateStyle(T), u, xgrid, range), eachrow(data))
+        return map(u->integrate1D(IntegrateStyle(T), u, xgrid, range), eachrow(data))
     else
         throw(DomainError(axis, "axis should be 1 or 2 for Matrix"))
     end
 end
 
-function integrate1DRange(data::AbstractVector, xgrid::T, range; axis=1) where {T}
-    return integrate1DRange(IntegrateStyle(T), data, xgrid, range)
+function integrate1D(data::AbstractVector, xgrid::T, range; axis=1) where {T}
+    return integrate1D(IntegrateStyle(T), data, xgrid, range)
 end
 
 @inline function trapezoidInt(data, grid, range)
     return (0.5*(range[1]+range[2])*(data[2]-data[1]) - grid[1]*data[2] + grid[2]*data[1])/(grid[2]-grid[1])*(range[2]-range[1])
 end
 
-function integrate1DRange(::NoIntegrate, data, xgrid, range)
+function integrate1D(::NoIntegrate, data, xgrid, range)
     sign, x1, x2 = (range[1]<range[2]) ? (1.0, range[1], range[2]) : (-1.0, range[2], range[1])
     @assert xgrid.bound[1] <= x1 <= x2 <= xgrid.bound[2]
     xi1, xi2 = floor(xgrid, x1), floor(xgrid, x2)
@@ -728,8 +746,15 @@ function integrate1DRange(::NoIntegrate, data, xgrid, range)
     return result*sign
 end
 
-function integrate1DRange(::WeightIntegrate, data, xgrid, range)
-    return integrate1DRange(NoIntegrate(), data, xgrid, range)
+function integrate1D(::ChebIntegrate, data, xgrid, range)
+    a, b = xgrid.bound[1], xgrid.bound[2]
+    x1, x2 = range[1], range[2]
+    c1, c2 = (2x1-a-b)/(b-a), (2x2-a-b)/(b-a)
+    return SimpleG.chebint(xgrid.size, c1, c2, data, xgrid.invVandermonde)*(b-a)/2.0
+end
+
+function integrate1D(::WeightIntegrate, data, xgrid, range)
+    return integrate1D(NoIntegrate(), data, xgrid, range)
     # may give bad result for GaussLegendre grid
     # sign, x1, x2 = (range[1]<range[2]) ? (1.0, range[1], range[2]) : (-1.0, range[2], range[1])
     # @assert xgrid.bound[1] <= x1 <= x2 <= xgrid.bound[2]
@@ -750,7 +775,7 @@ function integrate1DRange(::WeightIntegrate, data, xgrid, range)
     # return result*sign
 end
 
-function integrate1DRange(::CompositeIntegrate, data, xgrid, range)
+function integrate1D(::CompositeIntegrate, data, xgrid, range)
     sign, x1, x2 = (range[1]<range[2]) ? (1.0, range[1], range[2]) : (-1.0, range[2], range[1])
     @assert xgrid.bound[1] <= x1 <= x2 <= xgrid.bound[2]
     pi1, pi2 = floor(xgrid.panel, x1), floor(xgrid.panel, x2)
@@ -759,14 +784,14 @@ function integrate1DRange(::CompositeIntegrate, data, xgrid, range)
     if pi1==pi2
         pi = pi1
         head, tail = xgrid.inits[pi], xgrid.inits[pi]+xgrid.subgrids[pi].size-1
-        result += integrate1DRange(data[head:tail], xgrid.subgrids[pi], [x1,x2])
+        result += integrate1D(data[head:tail], xgrid.subgrids[pi], [x1,x2])
     else
         for pi in pi1:pi2
             head, tail = xgrid.inits[pi], xgrid.inits[pi]+xgrid.subgrids[pi].size-1
             if pi == pi1
-                result += integrate1DRange(data[head:tail], xgrid.subgrids[pi], [x1,xgrid.subgrids[pi].bound[2]])
+                result += integrate1D(data[head:tail], xgrid.subgrids[pi], [x1,xgrid.subgrids[pi].bound[2]])
             elseif pi == pi2
-                result += integrate1DRange(data[head:tail], xgrid.subgrids[pi], [xgrid.subgrids[pi].bound[1],x2])
+                result += integrate1D(data[head:tail], xgrid.subgrids[pi], [xgrid.subgrids[pi].bound[1],x2])
             else
                 result += integrate1D( data[head:tail],xgrid.subgrids[pi])
             end

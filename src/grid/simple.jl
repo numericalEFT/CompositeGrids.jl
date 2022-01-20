@@ -177,7 +177,7 @@ struct BaryCheb{T<:AbstractFloat} <: OpenGrid
     size::Int
     grid::Vector{T}
     weight::Vector{T}
-
+    invVandermonde::Matrix{T}
 """
     function BaryCheb{T}(bound, N) where {T<:AbstractFloat}
 
@@ -190,8 +190,9 @@ create BaryCheb grid.
         a, b = bound[1], bound[2]
         weight = (b - a) / 2  .* w
         grid = (a + b) / 2 .+ (b - a) / 2 .* x
+        invVandermonde = inv(transpose(vandermonde(x)))
 
-        return new{T}(bound, N, grid, weight)
+        return new{T}(bound, N, grid, weight, invVandermonde)
     end
 end
 
