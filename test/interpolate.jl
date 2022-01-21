@@ -273,6 +273,23 @@
         @test abs(int_result - 0.5) < 3.e-6
 
         β = 1.0
+        tgrid = SimpleGrid.BaryCheb{Float64}([0.0, β], 4)
+        # tugrid = Grid.Uniform{Float64,33}(0.0, β, (true, true))
+        # kugrid = Grid.Uniform{Float64,33}(0.0, maxK, (true, true))
+        data = zeros(tgrid.size)
+        for (ti, t) in enumerate(tgrid.grid)
+            data[ti] = f(t)
+        end
+        println(tgrid.grid)
+        println(data)
+        println(tgrid.weight)
+        println(sum(data.*tgrid.weight))
+        int_result = Interp.integrate1D(data, tgrid)
+        @test abs(int_result - 0.5) < 3.e-6
+        int_result = Interp.integrate1D(data, tgrid, [0.3, 0.5])
+        @test abs(int_result - 0.08) < 3.e-6
+
+        β = 1.0
         tgrid = CompositeGrid.LogDensedGrid(:gauss, [0.0, β], [0.0, 0.5β, β], 2, 0.001, 3)
         # tugrid = Grid.Uniform{Float64,33}(0.0, β, (true, true))
         # kugrid = Grid.Uniform{Float64,33}(0.0, maxK, (true, true))
@@ -286,6 +303,29 @@
         int_result = Interp.integrate1D(data, tgrid; axis=2)
         @test abs(int_result[1] - 0.5) < 3.e-6
         @test abs(int_result[2] - 0.5) < 3.e-6
+
+        β = 1.0
+        tgrid = CompositeGrid.LogDensedGrid(:cheb, [0.0, β], [0.0, 0.5β, β], 8, 0.001, 4)
+        # tgrid = SimpleGrid.Uniform{Float64}([0.0, β], 11)
+        # println(tgrid.grid)
+        g(t) = t^2
+        G(t) = t^3/3.0
+        # g(t) = cos(t)
+        # G(t) = sin(t)
+        data = zeros(tgrid.size)
+        for (ti, t) in enumerate(tgrid.grid)
+            data[ti] = g(t)
+        end
+
+        N=10
+        testpoints = rand(N,2)*β
+        for i in 1:N
+            int_result = Interp.integrate1D(data, tgrid, testpoints[i,:])
+            analytic = G(testpoints[i,2])-G(testpoints[i,1])
+            # println(testpoints[i,:])
+            # println(int_result, ",", analytic)
+            @test abs(int_result - analytic) < 3.e-6
+        end
     end
 
     @testset "Find Neighbor and Interp Sliced" begin
@@ -336,6 +376,54 @@
         fbar = Interp.interp1D(data, tgrid, t)
         @test abs(f(t) - fbar) < 3.e-6 # linear interpolation, so error is δK+δt
 
+    end
+
+    @testset "Differentiate" begin
+        β = 1.0
+        tgrid = CompositeGrid.LogDensedGrid(:uniform, [0.0, β], [0.0, 0.5β, β], 20, 0.0001, 20)
+        # tgrid = SimpleGrid.Uniform{Float64}([0.0, β], 11)
+        # println(tgrid.grid)
+        # g(t) = t^2
+        # G(t) = t^3/3.0
+        g(t) = cos(t)
+        G(t) = sin(t)
+        data = zeros(tgrid.size)
+        for (ti, t) in enumerate(tgrid.grid)
+            data[ti] = G(t)
+        end
+
+        N=2
+        testpoints = rand(N)*β
+        for i in 1:N
+            int_result = Interp.differentiate1D(data, tgrid, testpoints[i])
+            analytic = g(testpoints[i])
+            # println(testpoints[i,:])
+            println(int_result, ",", analytic)
+            # @test abs(int_result - analytic) < 3.e-6
+        end
+
+        β = 1.0
+        tgrid = CompositeGrid.LogDensedGrid(:cheb, [0.0, β], [0.0, 0.5β, β], 4, 0.0001, 8)
+        # tgrid = SimpleGrid.Uniform{Float64}([0.0, β], 11)
+        # println(tgrid.grid)
+        g(t) = t^2
+        G(t) = t^3/3.0
+        # g(t) = cos(t)
+        # G(t) = sin(t)
+        data = zeros(tgrid.size)
+        for (ti, t) in enumerate(tgrid.grid)
+            data[ti] = G(t)
+        end
+
+        N=2
+        testpoints = rand(N)*β
+        for i in 1:N
+            int_result = Interp.differentiate1D(data, tgrid, testpoints[i])
+            analytic = g(testpoints[i])
+            # println(testpoints[i,:])
+            println(int_result, ",", analytic)
+            # @test abs(int_result - analytic) < 3.e-6
+        end
     end
 
 end

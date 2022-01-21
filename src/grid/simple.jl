@@ -148,7 +148,7 @@ return 1 for x<grid[1] and grid.size-1 for x>grid[end].
 """
 function Base.floor(grid::Uniform{T}, x) where {T}
     result = (x-grid.grid[1])/(grid.grid[end]-grid.grid[1])*(grid.size-1)+1
-    if result <=0
+    if result <1
         return 1
     elseif result >= grid.size
         return grid.size-1
@@ -177,7 +177,7 @@ struct BaryCheb{T<:AbstractFloat} <: OpenGrid
     size::Int
     grid::Vector{T}
     weight::Vector{T}
-
+    invVandermonde::Matrix{T}
 """
     function BaryCheb{T}(bound, N) where {T<:AbstractFloat}
 
@@ -190,8 +190,19 @@ create BaryCheb grid.
         a, b = bound[1], bound[2]
         weight = (b - a) / 2  .* w
         grid = (a + b) / 2 .+ (b - a) / 2 .* x
+        invVandermonde = inv(transpose(vandermonde(x)))
 
-        return new{T}(bound, N, grid, weight)
+        return new{T}(bound, N, grid, weight, invVandermonde)
+    end
+    function BaryCheb{T}(bound, N, invVandermonde) where {T<:AbstractFloat}
+        # use given Vandermonde matrix, useful for composite grid that has many BaryCheb subgrids with same order
+        order = N
+        x, w =barychebinit(order)
+        grid = zeros(T, N)
+        a, b = bound[1], bound[2]
+        weight = (b - a) / 2  .* w
+        grid = (a + b) / 2 .+ (b - a) / 2 .* x
+        return new{T}(bound, N, grid, weight, invVandermonde)
     end
 end
 

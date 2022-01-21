@@ -2,6 +2,7 @@ using CompositeGrids, Test, StaticArrays, LinearAlgebra, Printf, Random, Statist
 # import Test: @test, @testset
 
 if isempty(ARGS)
+    include("chebyshev.jl")
     include("grid.jl")
     include("interpolate.jl")
     include("io.jl")

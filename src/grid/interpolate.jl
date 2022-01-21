@@ -16,6 +16,9 @@ abstract type InterpStyle end
 struct LinearInterp <: InterpStyle end
 struct ChebInterp <: InterpStyle end
 struct CompositeInterp <: InterpStyle end
+const LINEARINTERP = LinearInterp()
+const CHEBINTERP = ChebInterp()
+const COMPOSITEINTERP = CompositeInterp()
 
 InterpStyle(::Type) = LinearInterp()
 InterpStyle(::Type{<:SimpleG.BaryCheb}) = ChebInterp()
@@ -142,19 +145,30 @@ Interpolate with given neighbor and sliced data. Assume data already sliced on g
 - axis: axis sliced and to be interpolated
 """
 function interpsliced(neighbor, data; axis=1)
-    if ndims(data) == 1
-        return _interpsliced(neighbor, data)
+    return dropdims(mapslices(u->_interpsliced(neighbor, u), data, dims=axis), dims=axis)
+end
+
+function interpsliced(neighbor, data::AbstractMatrix; axis=1)
+    # trying to make it type stable for matrix
+    if axis == 1
+        return map(u->_interpsliced(neighbor,u), eachcol(data))
+    elseif axis == 2
+        return map(u->_interpsliced(neighbor,u), eachrow(data))
     else
-        return dropdims(mapslices(u->_interpsliced(neighbor, u), data, dims=axis), dims=axis)
+        throw(DomainError(axis, "axis should be 1 or 2 for Matrix"))
     end
 end
 
-# function interpsliced(neighbor, data; axis=1)
-#     return dropdims(mapslices(u->_interpsliced(neighbor, u), data, dims=axis), dims=axis)
-# end
+function interpsliced(neighbor, data::AbstractVector; axis=1)
+    return _interpsliced(neighbor, data)
+end
 
-# function interpsliced(neighbor, data::Vector; axis=1)
-#     return _interpsliced(neighbor, data)
+# function interpsliced(neighbor, data; axis=1)
+#     if ndims(data) == 1
+#         return _interpsliced(neighbor, data)
+#     else
+#         return dropdims(mapslices(u->_interpsliced(neighbor, u), data, dims=axis), dims=axis)
+#     end
 # end
 
 function _interpsliced(neighbor::LinearNeighbor, data)
@@ -175,7 +189,7 @@ function _interpsliced(neighbor::ChebNeighbor, data)
 end
 
 
-function interpND(data, xgrids, xs; method=LinearInterp())
+function interpND(data, xgrids, xs; method=LINEARINTERP)
     #WARNING: This function works but is not type stable
     dim = length(xs)
     neighbors = [findneighbor(xgrids[i], xs[i]; method) for i in 1:dim]
@@ -399,7 +413,18 @@ function interp1D(data, xgrid::T, x; axis=1, method=InterpStyle(T)) where {T}
     return dropdims(mapslices(u->interp1D(method, u, xgrid, x), data, dims=axis), dims=axis)
 end
 
-function interp1D(data::Vector, xgrid::T, x;axis=1, method=InterpStyle(T)) where {DT,T}
+function interp1D(data::AbstractMatrix, xgrid::T, x; axis=1, method=InterpStyle(T)) where {T}
+    # trying to make it type stable for matrix
+    if axis == 1
+        return map(u->interp1D(method, u, xgrid, x), eachcol(data))
+    elseif axis == 2
+        return map(u->interp1D(method, u, xgrid, x), eachrow(data))
+    else
+        throw(DomainError(axis, "axis should be 1 or 2 for Matrix"))
+    end
+end
+
+function interp1D(data::AbstractVector, xgrid::T, x;axis=1, method=InterpStyle(T)) where {DT,T}
     return interp1D(method, data, xgrid, x)
 end
 
@@ -465,7 +490,7 @@ function interp1DGrid(data, xgrid::T, grid; axis=1, method=InterpStyle(T)) where
     return mapslices(u->interp1DGrid(method, u, xgrid, grid), data, dims=axis)
 end
 
-function interp1DGrid(data::Vector, xgrid::T, grid; axis=1, method=InterpStyle(T)) where {T}
+function interp1DGrid(data::AbstractVector, xgrid::T, grid; axis=1, method=InterpStyle(T)) where {T}
     return interp1DGrid(method, data, xgrid, grid)
 end
 
@@ -535,8 +560,14 @@ abstract type IntegrateStyle end
 struct WeightIntegrate <: IntegrateStyle end
 struct NoIntegrate <: IntegrateStyle end
 struct CompositeIntegrate <: IntegrateStyle end
+struct ChebIntegrate <: IntegrateStyle end
+const WEIGHTINTEGRATE = WeightIntegrate()
+const NOINTEGRATE = NoIntegrate()
+const COMPOSITEINTEGRATE = CompositeIntegrate()
+const CHEBINTEGRATE = ChebIntegrate()
 
 IntegrateStyle(::Type) = NoIntegrate()
+IntegrateStyle(::Type{<:SimpleG.BaryCheb}) = ChebIntegrate()
 IntegrateStyle(::Type{<:SimpleG.GaussLegendre}) = WeightIntegrate()
 IntegrateStyle(::Type{<:SimpleG.Uniform}) = WeightIntegrate()
 IntegrateStyle(::Type{<:SimpleG.Arbitrary}) = WeightIntegrate()
@@ -559,7 +590,17 @@ function integrate1D(data, xgrid::T; axis=1) where {T}
     return dropdims(mapslices(u->integrate1D(IntegrateStyle(T), u, xgrid), data, dims=axis), dims=axis)
 end
 
-function integrate1D(data::Vector, xgrid::T; axis=1) where {T}
+function integrate1D(data::AbstractMatrix, xgrid::T; axis=1) where {T}
+    if axis == 1
+        return map(u->integrate1D(IntegrateStyle(T), u, xgrid), eachcol(data))
+    elseif axis == 2
+        return map(u->integrate1D(IntegrateStyle(T), u, xgrid), eachrow(data))
+    else
+        throw(DomainError(axis, "axis should be 1 or 2 for Matrix"))
+    end
+end
+
+function integrate1D(data::AbstractVector, xgrid::T; axis=1) where {T}
     return integrate1D(IntegrateStyle(T), data, xgrid)
 end
 
@@ -574,15 +615,14 @@ works for grids that do not have integration weight stored
 - data: one-dimensional array of data
 """
 function integrate1D(::NoIntegrate, data, xgrid)
-    return 0.0
     result = eltype(data)(0.0)
 
     grid = xgrid.grid
     for i in 1:xgrid.size
         if i==1
-            weight = 0.5*(grid[2]-grid[1])
+            weight = 0.5*(grid[2]-xgrid.bound[1])
         elseif i==xgrid.size
-            weight = 0.5*(grid[end]-grid[end-1])
+            weight = 0.5*(xgrid.bound[2]-grid[end-1])
         else
             weight = 0.5*(grid[i+1]-grid[i-1])
         end
@@ -611,6 +651,21 @@ function integrate1D(::WeightIntegrate, data, xgrid)
 end
 
 """
+    function integrate1D(::ChebIntegrate, data, xgrid)
+
+calculate integration of data[i] on xgrid
+works for grids that have integration weight stored
+
+#Arguments:
+- xgrid: one-dimensional grid of x
+- data: one-dimensional array of data
+"""
+function integrate1D(::ChebIntegrate, data, xgrid)
+    a, b = xgrid.bound[1], xgrid.bound[2]
+    return SimpleG.chebint(xgrid.size, -1.0, 1.0, data, xgrid.invVandermonde)*(b-a)/2.0
+end
+
+"""
     function integrate1D(::CompositeIntegrate, data, xgrid)
 
 calculate integration of data[i] on xgrid
@@ -631,5 +686,179 @@ function integrate1D(::CompositeIntegrate, data, xgrid)
     return result
 
 end
+
+"""
+    function integrate1D(data, xgrid, range; axis=1)
+
+calculate integration of data[i] on xgrid.
+For 1D data, return a number; for multiple dimension, reduce the given axis.
+
+#Arguments:
+- xgrid: one-dimensional grid of x
+- data: one-dimensional array of data
+- range: range of integration, [init, fin] within bound of xgrid.
+- axis: axis to be integrated in data
+"""
+function integrate1D(data, xgrid::T, range; axis=1) where {T}
+    return dropdims(mapslices(u->integrate1D(IntegrateStyle(T), u, xgrid, range), data, dims=axis), dims=axis)
+end
+
+function integrate1D(data::AbstractMatrix, xgrid::T, range; axis=1) where {T}
+    if axis == 1
+        return map(u->integrate1D(IntegrateStyle(T), u, xgrid, range), eachcol(data))
+    elseif axis == 2
+        return map(u->integrate1D(IntegrateStyle(T), u, xgrid, range), eachrow(data))
+    else
+        throw(DomainError(axis, "axis should be 1 or 2 for Matrix"))
+    end
+end
+
+function integrate1D(data::AbstractVector, xgrid::T, range; axis=1) where {T}
+    return integrate1D(IntegrateStyle(T), data, xgrid, range)
+end
+
+@inline function trapezoidInt(data, grid, range)
+    return (0.5*(range[1]+range[2])*(data[2]-data[1]) - grid[1]*data[2] + grid[2]*data[1])/(grid[2]-grid[1])*(range[2]-range[1])
+end
+
+function integrate1D(::NoIntegrate, data, xgrid, range)
+    sign, x1, x2 = (range[1]<range[2]) ? (1.0, range[1], range[2]) : (-1.0, range[2], range[1])
+    @assert xgrid.bound[1] <= x1 <= x2 <= xgrid.bound[2]
+    xi1, xi2 = floor(xgrid, x1), floor(xgrid, x2)
+
+    result = eltype(data)(0.0)
+
+    grid = xgrid.grid
+    # g[xi1], x1, g[xi1+1], g[xi1+2], ... , g[xi2], x2
+    if xi1 == xi2
+        result += trapezoidInt(data[xi1:xi1+1],grid[xi1:xi1+1],[x1, x2])
+    else
+        for i in xi1:xi2
+            if i==xi1
+                result += trapezoidInt(data[i:i+1],grid[i:i+1],[x1,grid[i+1]])
+            elseif i==xi2
+                result += trapezoidInt(data[i:i+1],grid[i:i+1],[grid[i],x2])
+            else
+                result += 0.5*(data[i]+data[i+1])*(grid[i+1]-grid[i])
+            end
+        end
+    end
+    return result*sign
+end
+
+function integrate1D(::ChebIntegrate, data, xgrid, range)
+    a, b = xgrid.bound[1], xgrid.bound[2]
+    x1, x2 = range[1], range[2]
+    c1, c2 = (2x1-a-b)/(b-a), (2x2-a-b)/(b-a)
+    return SimpleG.chebint(xgrid.size, c1, c2, data, xgrid.invVandermonde)*(b-a)/2.0
+end
+
+function integrate1D(::WeightIntegrate, data, xgrid, range)
+    return integrate1D(NoIntegrate(), data, xgrid, range)
+    # may give bad result for GaussLegendre grid
+    # sign, x1, x2 = (range[1]<range[2]) ? (1.0, range[1], range[2]) : (-1.0, range[2], range[1])
+    # @assert xgrid.bound[1] <= x1 <= x2 <= xgrid.bound[2]
+    # xi1, xi2 = floor(xgrid, x1), floor(xgrid, x2)
+
+    # result = eltype(data)(0.0)
+    # grid=xgrid.grid
+    # for i in xi1+1:xi2
+    #     if i==xi1+1
+    #         weight = 0.5*(grid[i+1]-x1)
+    #     elseif i==xi2
+    #         weight = 0.5*(x2-grid[xi2])
+    #     else
+    #         weight = xgrid.weight[i]
+    #     end
+    #     result += data[i]*weight
+    # end
+    # return result*sign
+end
+
+function integrate1D(::CompositeIntegrate, data, xgrid, range)
+    sign, x1, x2 = (range[1]<range[2]) ? (1.0, range[1], range[2]) : (-1.0, range[2], range[1])
+    @assert xgrid.bound[1] <= x1 <= x2 <= xgrid.bound[2]
+    pi1, pi2 = floor(xgrid.panel, x1), floor(xgrid.panel, x2)
+
+    result = eltype(data)(0.0)
+    if pi1==pi2
+        pi = pi1
+        head, tail = xgrid.inits[pi], xgrid.inits[pi]+xgrid.subgrids[pi].size-1
+        result += integrate1D(data[head:tail], xgrid.subgrids[pi], [x1,x2])
+    else
+        for pi in pi1:pi2
+            head, tail = xgrid.inits[pi], xgrid.inits[pi]+xgrid.subgrids[pi].size-1
+            if pi == pi1
+                result += integrate1D(data[head:tail], xgrid.subgrids[pi], [x1,xgrid.subgrids[pi].bound[2]])
+            elseif pi == pi2
+                result += integrate1D(data[head:tail], xgrid.subgrids[pi], [xgrid.subgrids[pi].bound[1],x2])
+            else
+                result += integrate1D( data[head:tail],xgrid.subgrids[pi])
+            end
+        end
+    end
+    return result*sign
+end
+
+abstract type DifferentiateStyle end
+struct NoDifferentiate <: DifferentiateStyle end
+struct ChebDifferentiate <: DifferentiateStyle end
+struct CompositeDifferentiate <: DifferentiateStyle end
+const NODIFFERENTIATE = NoDifferentiate()
+const COMPOSITEDIFFERENTIATE = CompositeDifferentiate()
+const CHEBDIFFERENTIATE = ChebDifferentiate()
+
+DifferentiateStyle(::Type) = NoDifferentiate()
+DifferentiateStyle(::Type{<:SimpleG.BaryCheb}) = ChebDifferentiate()
+DifferentiateStyle(::Type{<:CompositeG.Composite}) = CompositeDifferentiate()
+
+"""
+    function differentiate1D(data, xgrid, x; axis=1)
+
+calculate integration of data[i] on xgrid.
+For 1D data, return a number; for multiple dimension, reduce the given axis.
+
+#Arguments:
+- xgrid: one-dimensional grid of x
+- data: one-dimensional array of data
+- x: point to differentiate
+- axis: axis to be differentiated in data
+"""
+function differentiate1D(data, xgrid::T, x; axis=1) where {T}
+    return dropdims(mapslices(u->differentiate1D(DifferentiateStyle(T), u, xgrid, x), data, dims=axis), dims=axis)
+end
+
+function differentiate1D(data::AbstractMatrix, xgrid::T, x; axis=1) where {T}
+    if axis == 1
+        return map(u->differentiate1D(DifferentiateStyle(T), u, xgrid,x), eachcol(data))
+    elseif axis == 2
+        return map(u->differentiate1D(DifferentiateStyle(T), u, xgrid,x), eachrow(data))
+    else
+        throw(DomainError(axis, "axis should be 1 or 2 for Matrix"))
+    end
+end
+
+function differentiate1D(data::AbstractVector, xgrid::T, x; axis=1) where {T}
+    return differentiate1D(DifferentiateStyle(T), data, xgrid,x)
+end
+
+function differentiate1D(::NoDifferentiate, data, xgrid, x)
+    #simple numerical differentiate
+    xi = floor(xgrid, x)
+    return (data[xi+1]-data[xi])/(xgrid[xi+1]-xgrid[xi])
+end
+
+function differentiate1D(::ChebDifferentiate, data, xgrid, x)
+    a, b = xgrid.bound[1], xgrid.bound[2]
+    c = (2x-a-b)/(b-a)
+    return SimpleG.chebdiff(xgrid.size, c, data, xgrid.invVandermonde)/(b-a)*2.0
+end
+
+function differentiate1D(::CompositeDifferentiate, data, xgrid, x)
+    i = floor(xgrid.panel, x)
+    head, tail = xgrid.inits[i], xgrid.inits[i]+xgrid.subgrids[i].size-1
+    return differentiate1D(data[head:tail], xgrid.subgrids[i], x)
+end
+
 
 end

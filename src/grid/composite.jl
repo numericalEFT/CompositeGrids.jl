@@ -136,7 +136,7 @@ create a composite grid with a Log grid as panel and subgrids of selected type.
 - `d2s` : panel grid is dense to sparse or not
 - `order` : number of grid points of subgrid
 """
-function CompositeLogGrid(type, bound, N, minterval, d2s, order, T=Float64)
+function CompositeLogGrid(type, bound, N, minterval, d2s, order, T=Float64, invVandermonde=SimpleG.invvandermonde(order))
     if type == :cheb
         SubGridType = SimpleG.BaryCheb{T}
     elseif type == :gauss
@@ -153,7 +153,11 @@ function CompositeLogGrid(type, bound, N, minterval, d2s, order, T=Float64)
 
     for i in 1:N-1
         _bound = [panel[i],panel[i+1]]
-        push!(subgrids, SubGridType(_bound,order))
+        if type == :cheb
+            push!(subgrids, SubGridType(_bound,order,invVandermonde))
+        else
+            push!(subgrids, SubGridType(_bound,order))
+        end
     end
 
     return Composite{T, SimpleG.Log{T},SubGridType}(panel,subgrids)
@@ -252,9 +256,9 @@ function LogDensedGrid(type, bound, dense_at, N, minterval, order, T=Float64)
     panel = SimpleG.Arbitrary{T}(panelgrid)
     #println("panel:",panel.grid)
     subgrids = Vector{Composite{T, SimpleG.Log{T}, SubGridType}}([])
-
+    invVandermonde = SimpleG.invvandermonde(order)
     for i in 1:length(panel.grid)-1
-        push!(subgrids, CompositeLogGrid(type, [panel[i],panel[i+1]], N, minterval, d2slist[i], order))
+        push!(subgrids, CompositeLogGrid(type, [panel[i],panel[i+1]], N, minterval, d2slist[i], order, T, invVandermonde))
     end
 
     return Composite{T, SimpleG.Arbitrary{T},Composite{T, SimpleG.Log{T}, SubGridType}}(panel,subgrids)
