@@ -33,6 +33,19 @@ function vandermonde(x)
     return vmat
 end
 
+function invvandermonde(order)
+    n = order
+    vmat = zeros(Float64, (n, n))
+    for i in 1:n
+        for j in 1:n
+            c = (2n-2i+1)π/(2n)
+            x = cos(c)
+            vmat[i,j] = x^(j-1)
+        end
+    end
+    return inv(transpose(vmat))
+end
+
 function weightcoef(a, i::Int, n)
     # integrate when i=1; differentiate when i=-1
     b = zeros(Float64, n)
@@ -107,9 +120,9 @@ function chebint(n, a, b, f, invmat)
     return sum(intw .* f)
 end
 
-function chebdiff(n, a, b, f, invmat)
-    B = weightcoef(b, -1, n) .- weightcoef(a, -1, n)
-    intw = calcweight(invmat, b)
+function chebdiff(n, x, f, invmat)
+    wc = weightcoef(x, -1, n)
+    intw = calcweight(invmat, wc)
     return sum(intw .* f)
 end
 

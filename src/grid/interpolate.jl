@@ -800,4 +800,65 @@ function integrate1D(::CompositeIntegrate, data, xgrid, range)
     return result*sign
 end
 
+abstract type DifferentiateStyle end
+struct NoDifferentiate <: DifferentiateStyle end
+struct ChebDifferentiate <: DifferentiateStyle end
+struct CompositeDifferentiate <: DifferentiateStyle end
+const NODIFFERENTIATE = NoDifferentiate()
+const COMPOSITEDIFFERENTIATE = CompositeDifferentiate()
+const CHEBDIFFERENTIATE = ChebDifferentiate()
+
+DifferentiateStyle(::Type) = NoDifferentiate()
+DifferentiateStyle(::Type{<:SimpleG.BaryCheb}) = ChebDifferentiate()
+DifferentiateStyle(::Type{<:CompositeG.Composite}) = CompositeDifferentiate()
+
+"""
+    function differentiate1D(data, xgrid, x; axis=1)
+
+calculate integration of data[i] on xgrid.
+For 1D data, return a number; for multiple dimension, reduce the given axis.
+
+#Arguments:
+- xgrid: one-dimensional grid of x
+- data: one-dimensional array of data
+- x: point to differentiate
+- axis: axis to be differentiated in data
+"""
+function differentiate1D(data, xgrid::T, x; axis=1) where {T}
+    return dropdims(mapslices(u->differentiate1D(DifferentiateStyle(T), u, xgrid, x), data, dims=axis), dims=axis)
+end
+
+function differentiate1D(data::AbstractMatrix, xgrid::T, x; axis=1) where {T}
+    if axis == 1
+        return map(u->differentiate1D(DifferentiateStyle(T), u, xgrid,x), eachcol(data))
+    elseif axis == 2
+        return map(u->differentiate1D(DifferentiateStyle(T), u, xgrid,x), eachrow(data))
+    else
+        throw(DomainError(axis, "axis should be 1 or 2 for Matrix"))
+    end
+end
+
+function differentiate1D(data::AbstractVector, xgrid::T, x; axis=1) where {T}
+    return differentiate1D(DifferentiateStyle(T), data, xgrid,x)
+end
+
+function differentiate1D(::NoDifferentiate, data, xgrid, x)
+    #simple numerical differentiate
+    xi = floor(xgrid, x)
+    return (data[xi+1]-data[xi])/(xgrid[xi+1]-xgrid[xi])
+end
+
+function differentiate1D(::ChebDifferentiate, data, xgrid, x)
+    a, b = xgrid.bound[1], xgrid.bound[2]
+    c = (2x-a-b)/(b-a)
+    return SimpleG.chebdiff(xgrid.size, c, data, xgrid.invVandermonde)/(b-a)*2.0
+end
+
+function differentiate1D(::CompositeDifferentiate, data, xgrid, x)
+    i = floor(xgrid.panel, x)
+    head, tail = xgrid.inits[i], xgrid.inits[i]+xgrid.subgrids[i].size-1
+    return differentiate1D(data[head:tail], xgrid.subgrids[i], x)
+end
+
+
 end
