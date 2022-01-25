@@ -1,7 +1,7 @@
 name = "CompositeGrids"
 uuid = "b5136c89-beeb-4521-9139-60d2cac8be56"
 authors = ["Xiansheng Cai <iintsjds@gmail.com> and contributors"]
-version = "0.0.3"
+version = "0.0.4"
 
 [deps]
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
