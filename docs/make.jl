@@ -28,6 +28,6 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/numericalEFT/CompositeGrids.jl.git",
+    repo="github.com/numericalEFT/CompositeGrids.jl",
     devbranch="dev"
 )

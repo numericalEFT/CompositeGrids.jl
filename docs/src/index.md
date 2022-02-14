@@ -4,7 +4,7 @@ CurrentModule = CompositeGrids
 
 # CompositeGrids
 
-Documentation for [CompositeGrids](https://github.com/iintSjds/CompositeGrids.jl).
+Documentation for [CompositeGrids](https://github.com/numericalEFT/CompositeGrids.jl).
 
 ```@index
 ```
