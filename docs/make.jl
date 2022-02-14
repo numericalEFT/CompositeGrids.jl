@@ -6,11 +6,11 @@ DocMeta.setdocmeta!(CompositeGrids, :DocTestSetup, :(using CompositeGrids); recu
 makedocs(;
     modules=[CompositeGrids],
     authors="Kun Chen, Tao Wang, Xiansheng Cai",
-    repo="https://github.com/iintSjds/CompositeGrids.jl/blob/{commit}{path}#{line}",
+    repo="https://github.com/numericalEFT/CompositeGrids.jl/blob/{commit}{path}#{line}",
     sitename="CompositeGrids.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://iintSjds.github.io/CompositeGrids.jl",
+        canonical="https://numericaleft.github.io/CompositeGrids.jl",
         assets=String[],
     ),
     pages=[
