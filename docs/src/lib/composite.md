@@ -1,5 +1,5 @@
 # Composite Grids
 
 ```@autodocs
-Modules = [CompositeGrids.CompositeGrid]
+Modules = [CompositeGrids.CompositeG]
 ```
