@@ -406,8 +406,8 @@
         tgrid = CompositeGrid.LogDensedGrid(:cheb, [0.0, β], [0.0, 0.5β, β], 4, 0.0001, 8)
         # tgrid = SimpleGrid.Uniform{Float64}([0.0, β], 11)
         # println(tgrid.grid)
-        g(t) = t^2
-        G(t) = t^3/3.0
+        # g(t) = t^2
+        # G(t) = t^3/3.0
         # g(t) = cos(t)
         # G(t) = sin(t)
         data = zeros(tgrid.size)

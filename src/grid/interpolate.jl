@@ -470,7 +470,7 @@ first floor on panel to find subgrid, then call interp1D on subgrid
 function interp1D(::CompositeInterp,data, xgrid, x)
     i = floor(xgrid.panel, x)
     head, tail = xgrid.inits[i], xgrid.inits[i]+xgrid.subgrids[i].size-1
-    return interp1D(data[head:tail], xgrid.subgrids[i], x)
+    return interp1D(view(data, head:tail), xgrid.subgrids[i], x)
 end
 
 
@@ -540,13 +540,13 @@ function interp1DGrid(::CompositeInterp, data, xgrid, grid)
             end
             if grid[curr]<xgrid.panel[pi+1] && curr==length(grid)
                 @assert xgrid.subgrids[pi].bound[1]<=grid[init]<=grid[curr]<=xgrid.subgrids[pi].bound[2]
-                ff[init:curr] = interp1DGrid(data[head:tail], xgrid.subgrids[pi], grid[init:curr])
+                ff[init:curr] = interp1DGrid(view(data, head:tail), xgrid.subgrids[pi], grid[init:curr])
                 return ff
             else
                 @assert xgrid.subgrids[pi].bound[1]<=grid[init]<=grid[curr-1]<=xgrid.subgrids[pi].bound[2]
-                ff[init:curr-1] = interp1DGrid(data[head:tail], xgrid.subgrids[pi], grid[init:curr-1])
+                ff[init:curr-1] = interp1DGrid(view(data, head:tail), xgrid.subgrids[pi], grid[init:curr-1])
             end
-            # println(data[head:tail])
+            # println(view(data, head:tail))
             # println(xgrid.subgrids[pi].grid)
             # println(grid[init:curr-1])
             # println(ff[init:curr-1])
@@ -680,7 +680,7 @@ function integrate1D(::CompositeIntegrate, data, xgrid)
 
     for pi in 1:xgrid.panel.size-1
         head, tail = xgrid.inits[pi], xgrid.inits[pi]+xgrid.subgrids[pi].size-1
-        result += integrate1D( data[head:tail],xgrid.subgrids[pi])
+        result += integrate1D( view(data, head:tail),xgrid.subgrids[pi])
         currgrid = xgrid.subgrids[pi]
     end
     return result
@@ -784,16 +784,16 @@ function integrate1D(::CompositeIntegrate, data, xgrid, range)
     if pi1==pi2
         pi = pi1
         head, tail = xgrid.inits[pi], xgrid.inits[pi]+xgrid.subgrids[pi].size-1
-        result += integrate1D(data[head:tail], xgrid.subgrids[pi], [x1,x2])
+        result += integrate1D(view(data, head:tail), xgrid.subgrids[pi], [x1,x2])
     else
         for pi in pi1:pi2
             head, tail = xgrid.inits[pi], xgrid.inits[pi]+xgrid.subgrids[pi].size-1
             if pi == pi1
-                result += integrate1D(data[head:tail], xgrid.subgrids[pi], [x1,xgrid.subgrids[pi].bound[2]])
+                result += integrate1D(view(data, head:tail), xgrid.subgrids[pi], [x1,xgrid.subgrids[pi].bound[2]])
             elseif pi == pi2
-                result += integrate1D(data[head:tail], xgrid.subgrids[pi], [xgrid.subgrids[pi].bound[1],x2])
+                result += integrate1D(view(data, head:tail), xgrid.subgrids[pi], [xgrid.subgrids[pi].bound[1],x2])
             else
-                result += integrate1D( data[head:tail],xgrid.subgrids[pi])
+                result += integrate1D( view(data, head:tail),xgrid.subgrids[pi])
             end
         end
     end
@@ -857,7 +857,7 @@ end
 function differentiate1D(::CompositeDifferentiate, data, xgrid, x)
     i = floor(xgrid.panel, x)
     head, tail = xgrid.inits[i], xgrid.inits[i]+xgrid.subgrids[i].size-1
-    return differentiate1D(data[head:tail], xgrid.subgrids[i], x)
+    return differentiate1D(view(data, head:tail), xgrid.subgrids[i], x)
 end
 
 
