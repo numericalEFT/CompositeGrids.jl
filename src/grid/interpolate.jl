@@ -540,11 +540,11 @@ function interp1DGrid(::CompositeInterp, data, xgrid, grid)
             end
             if grid[curr]<xgrid.panel[pi+1] && curr==length(grid)
                 @assert xgrid.subgrids[pi].bound[1]<=grid[init]<=grid[curr]<=xgrid.subgrids[pi].bound[2]
-                ff[init:curr] = interp1DGrid(view(data, head:tail), xgrid.subgrids[pi], grid[init:curr])
+                ff[init:curr] = interp1DGrid(view(data, head:tail), xgrid.subgrids[pi], view(grid, init:curr))
                 return ff
             else
                 @assert xgrid.subgrids[pi].bound[1]<=grid[init]<=grid[curr-1]<=xgrid.subgrids[pi].bound[2]
-                ff[init:curr-1] = interp1DGrid(view(data, head:tail), xgrid.subgrids[pi], grid[init:curr-1])
+                ff[init:curr-1] = interp1DGrid(view(data, head:tail), xgrid.subgrids[pi], view(grid, init:curr-1))
             end
             # println(view(data, head:tail))
             # println(xgrid.subgrids[pi].grid)
@@ -731,13 +731,13 @@ function integrate1D(::NoIntegrate, data, xgrid, range)
     grid = xgrid.grid
     # g[xi1], x1, g[xi1+1], g[xi1+2], ... , g[xi2], x2
     if xi1 == xi2
-        result += trapezoidInt(data[xi1:xi1+1],grid[xi1:xi1+1],[x1, x2])
+        result += trapezoidInt(view(data, xi1:xi1+1),view(grid, xi1:xi1+1),[x1, x2])
     else
         for i in xi1:xi2
             if i==xi1
-                result += trapezoidInt(data[i:i+1],grid[i:i+1],[x1,grid[i+1]])
+                result += trapezoidInt(view(data, i:i+1),view(grid, i:i+1),[x1,grid[i+1]])
             elseif i==xi2
-                result += trapezoidInt(data[i:i+1],grid[i:i+1],[grid[i],x2])
+                result += trapezoidInt(view(data, i:i+1),view(grid, i:i+1),[grid[i],x2])
             else
                 result += 0.5*(data[i]+data[i+1])*(grid[i+1]-grid[i])
             end
