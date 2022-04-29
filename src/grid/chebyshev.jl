@@ -51,7 +51,7 @@ function weightcoef(a, i::Int, n)
     b = zeros(Float64, n)
     for j in 1:n
         if j+i-1 > 0
-            b[j] = a^(j+i-1)/(j+i-1)
+            b[j] = a^(j+i-1) * factorial(j-1) / factorial(j+i-1)
         elseif j+i-1 == 0
             b[j] = 1
         else
