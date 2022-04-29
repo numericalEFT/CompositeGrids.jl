@@ -415,14 +415,14 @@
             data[ti] = G(t)
         end
 
-        N=2
+        N=100
         testpoints = rand(N)*β
         for i in 1:N
             int_result = Interp.differentiate1D(data, tgrid, testpoints[i])
             analytic = g(testpoints[i])
             # println(testpoints[i,:])
-            println(int_result, ",", analytic)
-            # @test abs(int_result - analytic) < 3.e-6
+            # println(int_result, ",", analytic)
+            @test isapprox(int_result, analytic, rtol = 1e-6, atol = 1e-6)
         end
     end
 

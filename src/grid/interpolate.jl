@@ -860,5 +860,4 @@ function differentiate1D(::CompositeDifferentiate, data, xgrid, x)
     return differentiate1D(view(data, head:tail), xgrid.subgrids[i], x)
 end
 
-
 end
