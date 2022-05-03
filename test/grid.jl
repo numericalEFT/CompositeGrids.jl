@@ -215,6 +215,15 @@ end
         @test floor(comp, comp[end]) == comp.size-1
         @test floor(comp, 10.0) == comp.size-1
 
+        # test grid generation
+        comp = CompositeGrid.LogDensedGrid(:uniform, [0.0,10.0], [0.0,],4,0.001,4)
+        println(comp.grid)
+        comp = CompositeGrid.LogDensedGrid(:uniform, [0.0,10.0], [0.0,1.0],4,0.001,4)
+        println(comp.grid)
+        comp = CompositeGrid.LogDensedGrid(:uniform, [0.0,10.0], [0.5,1.0],4,0.001,4)
+        println(comp.grid)
+        comp = CompositeGrid.LogDensedGrid(:uniform, [0.0,10.0], [0.5,10.0],4,0.001,4)
+        println(comp.grid)
     end
 
 end
