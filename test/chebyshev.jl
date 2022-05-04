@@ -25,6 +25,10 @@
         println("intw:",intw)
         @test sum(intw .* data) ≈ F(x2) - F(x1)
         @test SimpleGrid.chebint(n, x1, x2, data, invmat) ≈ F(x2) - F(x1)
+
+        Data = F.(x)
+        x1 = 0.4
+        @test isapprox(SimpleGrid.chebdiff(n, x1, Data, invmat), f(x1), rtol = 1e-6)
     end
 
 end

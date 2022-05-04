@@ -199,6 +199,8 @@ function LogDensedGrid(type, bound, dense_at, N, minterval, order, T=Float64)
         if i==1
             if abs(dense_at[i]-bound[1])<minterval
                 push!(dp, bound[1])
+            elseif abs(dense_at[i]-bound[2])<minterval
+                push!(dp, bound[2])
             else
                 push!(dp, dense_at[i])
             end
@@ -249,7 +251,7 @@ function LogDensedGrid(type, bound, dense_at, N, minterval, order, T=Float64)
     end
     if dp[end] !=  bound[2]
         push!(panelgrid, bound[2])
-        @assert !d2slist[end] == true
+        # @assert !d2slist[end] == true
         push!(d2slist, true)
     end
 
