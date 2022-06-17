@@ -3,8 +3,10 @@ Provide interpolation and integration.
 """
 module Interp
 
-using StaticArrays, FastGaussQuadrature, CompositeGrids
-# using StaticArrays, FastGaussQuadrature
+# using StaticArrays, FastGaussQuadrature, CompositeGrids
+using StaticArrays, FastGaussQuadrature
+using ..SimpleG
+using ..CompositeG
 
 #include("chebyshev.jl")
 
