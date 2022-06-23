@@ -8,6 +8,7 @@ using StaticArrays, FastGaussQuadrature
 using ..SimpleG
 using ..CompositeG
 
+using ..BaryChebTools
 #include("chebyshev.jl")
 
 # include("simple.jl")
@@ -188,7 +189,7 @@ end
 
 function _interpsliced(neighbor::ChebNeighbor, data)
     # data should be sliced priorly
-    return SimpleG.barycheb(length(neighbor.grid), neighbor.x, data, neighbor.weight, neighbor.grid)
+    return BaryChebTools.barycheb(length(neighbor.grid), neighbor.x, data, neighbor.weight, neighbor.grid)
 end
 
 
@@ -456,7 +457,7 @@ linear interpolation of data(x), barycheb for BaryCheb grid
 - x: x
 """
 function interp1D(::ChebInterp, data, xgrid, x)
-    return SimpleG.barycheb(xgrid.size, x, data, xgrid.weight, xgrid.grid)
+    return BaryChebTools.barycheb(xgrid.size, x, data, xgrid.weight, xgrid.grid)
 end
 
 """
@@ -665,7 +666,7 @@ works for grids that have integration weight stored
 """
 function integrate1D(::ChebIntegrate, data, xgrid)
     a, b = xgrid.bound[1], xgrid.bound[2]
-    return SimpleG.chebint(xgrid.size, -1.0, 1.0, data, xgrid.invVandermonde) * (b - a) / 2.0
+    return BaryChebTools.chebint(xgrid.size, -1.0, 1.0, data, xgrid.invVandermonde) * (b - a) / 2.0
 end
 
 """
@@ -753,7 +754,7 @@ function integrate1D(::ChebIntegrate, data, xgrid, range)
     a, b = xgrid.bound[1], xgrid.bound[2]
     x1, x2 = range[1], range[2]
     c1, c2 = (2x1 - a - b) / (b - a), (2x2 - a - b) / (b - a)
-    return SimpleG.chebint(xgrid.size, c1, c2, data, xgrid.invVandermonde) * (b - a) / 2.0
+    return BaryChebTools.chebint(xgrid.size, c1, c2, data, xgrid.invVandermonde) * (b - a) / 2.0
 end
 
 function integrate1D(::WeightIntegrate, data, xgrid, range)
@@ -854,7 +855,7 @@ end
 function differentiate1D(::ChebDifferentiate, data, xgrid, x)
     a, b = xgrid.bound[1], xgrid.bound[2]
     c = (2x - a - b) / (b - a)
-    return SimpleG.chebdiff(xgrid.size, c, data, xgrid.invVandermonde) / (b - a) * 2.0
+    return BaryChebTools.chebdiff(xgrid.size, c, data, xgrid.invVandermonde) / (b - a) * 2.0
 end
 
 function differentiate1D(::CompositeDifferentiate, data, xgrid, x)
