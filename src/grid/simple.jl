@@ -9,8 +9,12 @@ export AbstractGrid, OpenGrid, ClosedGrid, Uniform, BaryCheb, GaussLegendre, Arb
 
 using StaticArrays, FastGaussQuadrature
 
-include("chebyshev.jl")
-export barychebinit, barycheb
+using ..BaryChebTools
+const barychebinit = BaryChebTools.barychebinit
+const vandermonde = BaryChebTools.vandermonde
+const invvandermonde = BaryChebTools.invvandermonde
+# include("chebyshev.jl")
+# export barychebinit, barycheb
 
 """
 All Grids are derived from AbstractGrid; ClosedGrid has bound[1], bound[2] == grid[1], grid[end],
