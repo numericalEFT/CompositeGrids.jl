@@ -52,10 +52,10 @@ create Arbitrary from grid.
         weight = zeros(Float64, size)
         for i in 1:size
             if i==1
-                if size==1
-                    weight[1] = 0 # allow arbitrary grid for 1 gridpoint, but integrate undefined
-                else
+                if size!=1
                     weight[1] = 0.5*(grid[2]-grid[1])
+                else
+                    weight[1] = 0 # allow arbitrary grid for 1 gridpoint, but integrate undefined
                 end
             elseif i==size
                 weight[end] = 0.5*(grid[end]-grid[end-1])
@@ -79,10 +79,10 @@ function Base.floor(grid::AbstractGrid, x) #where {T}
     if x <= grid.grid[1]
         return 1
     elseif x >= grid.grid[end]
-        if grid.size==1
-            return 1
-        else
+        if grid.size!=1
             return grid.size-1
+        else
+            return 1
         end
     end
 
