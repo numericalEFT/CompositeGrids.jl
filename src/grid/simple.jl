@@ -52,7 +52,11 @@ create Arbitrary from grid.
         weight = zeros(Float64, size)
         for i in 1:size
             if i==1
-                weight[1] = 0.5*(grid[2]-grid[1])
+                if size!=1
+                    weight[1] = 0.5*(grid[2]-grid[1])
+                else
+                    weight[1] = 0 # allow arbitrary grid for 1 gridpoint, but integrate undefined
+                end
             elseif i==size
                 weight[end] = 0.5*(grid[end]-grid[end-1])
             else
@@ -75,7 +79,11 @@ function Base.floor(grid::AbstractGrid, x) #where {T}
     if x <= grid.grid[1]
         return 1
     elseif x >= grid.grid[end]
-        return grid.size-1
+        if grid.size!=1
+            return grid.size-1
+        else
+            return 1
+        end
     end
 
     result = searchsortedfirst(grid.grid, x)-1
