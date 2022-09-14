@@ -864,4 +864,23 @@ function differentiate1D(::CompositeDifferentiate, data, xgrid, x)
     return differentiate1D(view(data, head:tail), xgrid.subgrids[i], x)
 end
 
+# locate and volumn for monte carlo
+
+function locate(grid::AbstractGrid, x)
+    @assert x >= grid.bound[1] && x <= grid.bound[2]
+    i = floor(grid, x)
+    return abs(x-grid[i])<abs(x-grid[i+1]) ? i : (i+1)
+end
+
+function volumn(grid::AbstractGrid, i)
+    if i != 1 && i != length(grid)
+        return (grid[i+1]-grid[i-1])/2
+    elseif i == 1
+        return (grid[i+1]+grid[i])/2 - grid.bound[1]
+    else
+        return grid.bound[2]-(grid[i]+grid[i-1])/2
+    end
+end
+volumn(grid::AbstractGrid) = grid.bound[2] - grid.bound[1]
+
 end
