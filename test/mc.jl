@@ -1,35 +1,35 @@
 @testset "MC" begin
-    # testing locate and volumn functions provided for monte carlo
+    # testing locate and volume functions provided for monte carlo
     rng = MersenneTwister(1234)
 
-    function test_locate_volumn(grid; δ = 1e-6)
+    function test_locate_volume(grid; δ = 1e-6)
         vol = 0.0
         for (ti, t) in enumerate(grid.grid)
             # test locate
             @test ti == Interp.locate(grid, t)
             @test ti == Interp.locate(grid, (ti == 1) ? t : t - δ)
             @test ti == Interp.locate(grid, (ti == length(grid)) ? t : t + δ)
-            vol += Interp.volumn(grid, ti)
+            vol += Interp.volume(grid, ti)
         end
 
-        @test vol ≈ Interp.volumn(grid)
+        @test vol ≈ Interp.volume(grid)
     end
 
-    @testset "Locate and Volumn" begin
+    @testset "Locate and Volume" begin
         Ng, Ns = 10, 4
         β = π
 
         tgrid = SimpleGrid.Uniform{Float64}([0.0, β], Ng)
-        test_locate_volumn(tgrid)
+        test_locate_volume(tgrid)
 
         tgrid = SimpleGrid.BaryCheb{Float64}([0.0, β], Ng)
-        test_locate_volumn(tgrid)
+        test_locate_volume(tgrid)
 
         tgrid = SimpleGrid.Log{Float64}([0.0, β], Ng, 0.001, true)
-        test_locate_volumn(tgrid)
+        test_locate_volume(tgrid)
 
         tgrid = CompositeGrid.LogDensedGrid(:cheb, [0.0, β],[β/2,], Ng, 0.001, Ns)
-        test_locate_volumn(tgrid)
+        test_locate_volume(tgrid)
 
     end
 
@@ -43,13 +43,13 @@
         for i in 1:Nmc
             x = rand(rng) * (b - a) + a
             ind = Interp.locate(grid, x)
-            vol = Interp.volumn(grid, ind)
-            hist[ind] += f(x) / vol * Interp.volumn(grid)
+            vol = Interp.volume(grid, ind)
+            hist[ind] += f(x) / vol * Interp.volume(grid)
         end
 
         for (ti, t) in enumerate(grid.grid)
-            vi = Interp.volumn(grid, ti)
-            vall = Interp.volumn(grid)
+            vi = Interp.volume(grid, ti)
+            vall = Interp.volume(grid)
             if ti != 1 && ti != Ng
                 @test isapprox(hist[ti] / Nmc, f(t),
                                rtol=5 / sqrt(Nmc*vi/vall), atol = 5*vi/vall)
