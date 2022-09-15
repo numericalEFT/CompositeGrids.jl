@@ -26,7 +26,7 @@ and optimized for integration. The description is attached in the comments in th
         [0.0, β],# The grid is defined on [0.0, β]
         [0.0, β],# and is densed at 0.0 and β, as given by 2nd and 3rd parameter.
         5,# N of log grid
-        0.005, # niminum interval length of log grid
+        0.005, # minimum interval length of log grid
         5 # N of bottom layer
     )
     # The grid has 3 layers.
