@@ -893,7 +893,7 @@ In 1D grids of this package, it is defined as the length of interval
 between (grid[i-1]+grid[i])/2 and (grid[i]+grid[i+1])/2, and for edge points
 one side is replaced by boundary points.
 When index i is omitted, the length of the whole grid is returned.
-It is guaranteed that volume(grid)==sum(volumn(grid, i) for i in 1:length(grid)).
+It is guaranteed that volume(grid)==sum(volume(grid, i) for i in 1:length(grid)).
 
 #Arguments:
 - grid: one-dimensional grid
