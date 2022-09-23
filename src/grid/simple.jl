@@ -98,7 +98,6 @@ Base.length(grid::AbstractGrid) = grid.size
 Base.size(grid::AbstractGrid) = (grid.size,)
 Base.size(grid::AbstractGrid, I::Int) = grid.size
 
-Base.show(io::IO, grid::AbstractGrid) = print(io, grid.grid)
 Base.view(grid::AbstractGrid, inds...) where {N} = Base.view(grid.grid, inds...)
 # set is not allowed for grids
 Base.getindex(grid::AbstractGrid, i) = grid.grid[i]
@@ -112,6 +111,25 @@ Base.iterate(grid::AbstractGrid, state) = (state >= grid.size) ? nothing : (grid
 Base.IteratorSize(::Type{AbstractGrid{T}}) where {T} = Base.HasLength()
 Base.IteratorEltype(::Type{AbstractGrid{T}}) where {T} = Base.HasEltype()
 Base.eltype(::Type{AbstractGrid{T}}) where {T} = eltype(T)
+
+"""
+    show(io::IO, grid::AbstractGrid)
+
+Write a text representation of the AbstractGrid 
+`grid` to the output stream `io`.
+"""
+function Base.show(io::IO, grid::AbstractGrid; isSimplified=false)
+    if isSimplified
+        print(io, "$(typeof(grid)): 1D Grid with $(grid.size) grid points.\n")
+    else
+        print(io,
+            "$(typeof(grid)): 1D Grid with:\n"
+            * "- bound: $(grid.bound)\n"
+            * "- size: $(grid.size)\n"
+            * "- grid: $(grid.grid)\n"
+        )
+    end
+end
 
 """
     struct Uniform{T<:AbstractFloat} <: ClosedGrid
@@ -324,6 +342,23 @@ struct Log{T<:AbstractFloat} <: ClosedGrid{T}
         end
 
         return new{T}(bound, N, grid, weight, λ, d2s)
+    end
+end
+
+function Base.show(io::IO, grid::Log; isSimplified=false)
+    if isSimplified
+        print(io,
+            "$(typeof(grid)): 1D " * (grid.d2s ? "dense to sparse" : "sparse to dense")
+            * " Log Grid with $(grid.size) grid points.\n"
+        )
+    else
+        print(io,
+            "$(typeof(grid)): 1D " * (grid.d2s ? "dense to sparse" : "sparse to dense")
+            * " Log Grid\n"
+            * "- bound: $(grid.bound)\n"
+            * "- size: $(grid.size)\n"
+            * "- grid: $(grid.grid)\n"
+        )
     end
 end
 
