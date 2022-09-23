@@ -30,7 +30,7 @@ create Composite grid from panel and subgrids.
 if the boundary grid point of two neighbor subgrids are too close, they will be combined
 in the whole grid.
 """
-struct Composite{T<:AbstractFloat,PG,SG} <: SimpleG.ClosedGrid
+struct Composite{T<:AbstractFloat,PG,SG} <: SimpleG.ClosedGrid{T}
     bound::SVector{2,T}
     size::Int
     grid::Vector{T}
