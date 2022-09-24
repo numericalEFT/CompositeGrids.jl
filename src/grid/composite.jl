@@ -77,6 +77,22 @@ struct Composite{T<:AbstractFloat,PG,SG} <: SimpleG.ClosedGrid{T}
 
 end
 
+function Base.show(io::IO, grid::Composite; isSimplified=false)
+    if isSimplified
+        print(io,
+            "$(typeof(grid)): 1D Composite Grid with $(grid.size) grid points.\n"
+        )
+    else
+        print(io,
+            "$(typeof(grid)): 1D Log Grid\n"
+            * "- bound: $(grid.bound)\n"
+            * "- size: $(grid.size)\n"
+            * "- grid: $(grid.grid)\n"
+            * "- panel: $(typeof(grid.panel))\n"
+        )
+    end
+end
+
 # function that returns the bottom type of the grid
 getbottomtype(grid::CompositeG.Composite{T,PG,SG}) where {T,PG,SG} = (SG <: CompositeG.Composite) ? (getbottomtype(grid.subgrids[1])) : (SG)
 
