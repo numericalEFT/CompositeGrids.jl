@@ -30,7 +30,7 @@ create Composite grid from panel and subgrids.
 if the boundary grid point of two neighbor subgrids are too close, they will be combined
 in the whole grid.
 """
-struct Composite{T<:AbstractFloat,PG,SG} <: SimpleG.ClosedGrid{T}
+struct Composite{T<:AbstractFloat,PG,SG} <: SimpleG.AbstractGrid{T}
     bound::SVector{2,T}
     size::Int
     grid::Vector{T}
@@ -61,8 +61,9 @@ struct Composite{T<:AbstractFloat,PG,SG} <: SimpleG.ClosedGrid{T}
                 append!(grid, subgrids[i].grid)
             else
                 if abs(grid[end] - subgrids[i].grid[1]) < eps(T) * 10
-                    inits[i] = length(grid)
-                    append!(grid, subgrids[i].grid[2:end])
+                    pop!(grid) # take out last gridpoint
+                    inits[i] = length(grid) + 1
+                    append!(grid, subgrids[i].grid[1:end])
                 else
                     inits[i] = length(grid) + 1
                     append!(grid, subgrids[i].grid)
@@ -76,6 +77,8 @@ struct Composite{T<:AbstractFloat,PG,SG} <: SimpleG.ClosedGrid{T}
     end
 
 end
+
+SimpleG.BoundType(::Type{<:Composite{T,PG,SG}}) where {T,PG,SG} = SimpleG.BoundType(SG)
 
 function Base.show(io::IO, grid::Composite; isSimplified=false)
     if isSimplified
@@ -107,7 +110,7 @@ if floor on panel grid is needed, simply call floor(grid.panel, x).
 return 1 for x<grid[1] and grid.size-1 for x>grid[end].
 """
 function Base.floor(grid::Composite{T,PG,SG}, x) where {T,PG,SG}
-    if SG <: SimpleG.ClosedGrid
+    if isa(SimpleG.BoundType(SG), SimpleG.ClosedBound)
         i = floor(grid.panel, x)
         return grid.inits[i] - 1 + floor(grid.subgrids[i], x)
     end
@@ -159,7 +162,7 @@ function CompositeLogGrid(type, bound, N, minterval, d2s, order, T=Float64, invV
     elseif type == :gauss
         SubGridType = SimpleG.GaussLegendre{T}
     elseif type == :uniform
-        SubGridType = SimpleG.Uniform{T}
+        SubGridType = SimpleG.Uniform{T,SimpleG.ClosedBound}
     else
         error("$type not implemented!")
     end
@@ -203,7 +206,7 @@ function LogDensedGrid(type, bound, dense_at, N, minterval, order, T=Float64)
     elseif type == :gauss
         SubGridType = SimpleG.GaussLegendre{T}
     elseif type == :uniform
-        SubGridType = SimpleG.Uniform{T}
+        SubGridType = SimpleG.Uniform{T,SimpleG.ClosedBound}
     else
         error("$type not implemented!")
     end
