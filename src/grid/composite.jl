@@ -78,7 +78,13 @@ struct Composite{T<:AbstractFloat,PG,SG} <: SimpleG.AbstractGrid{T}
 
 end
 
-SimpleG.BoundType(::Type{<:Composite{T,PG,SG}}) where {T,PG,SG} = SimpleG.BoundType(SG)
+function SimpleG.BoundType(::Type{<:Composite{T,PG,SG}}) where {T,PG,SG}
+    if SimpleG.BoundType(PG) == SimpleG.PeriodicBound
+        return SimpleG.PeriodicBound
+    else
+        return SimpleG.BoundType(SG)
+    end
+end
 
 function Base.show(io::IO, grid::Composite; isSimplified=false)
     if isSimplified
@@ -110,19 +116,30 @@ if floor on panel grid is needed, simply call floor(grid.panel, x).
 return 1 for x<grid[1] and grid.size-1 for x>grid[end].
 """
 function Base.floor(grid::Composite{T,PG,SG}, x) where {T,PG,SG}
-    if isa(SimpleG.BoundType(SG), SimpleG.ClosedBound)
+    if isa(SimpleG.BoundType(PG), SimpleG.PeriodicBound)
+        if x <= grid.grid[1] || x >= grid.grid[end]
+            return grid.size
+        end
+        if isa(SimpleG.BoundType(SG), SimpleG.ClosedBound)
+            i = floor(grid.panel, x)
+            return grid.inits[i] - 1 + floor(grid.subgrids[i], x)
+        else
+            result = searchsortedfirst(grid.grid, x) - 1
+            return result
+        end
+    elseif isa(SimpleG.BoundType(SG), SimpleG.ClosedBound)
         i = floor(grid.panel, x)
         return grid.inits[i] - 1 + floor(grid.subgrids[i], x)
-    end
+    else
+        if x <= grid.grid[1]
+            return 1
+        elseif x >= grid.grid[end]
+            return grid.size - 1
+        end
 
-    if x <= grid.grid[1]
-        return 1
-    elseif x >= grid.grid[end]
-        return grid.size - 1
+        result = searchsortedfirst(grid.grid, x) - 1
+        return result
     end
-
-    result = searchsortedfirst(grid.grid, x) - 1
-    return result
 end
 
 @inline function denseindex(grid::Composite{T,PG,SG}) where {T,PG,SG}
@@ -283,7 +300,7 @@ function LogDensedGrid(type, bound, dense_at, N, minterval, order, T=Float64)
         push!(subgrids, CompositeLogGrid(type, [panel[i], panel[i+1]], N, minterval, d2slist[i], order, T, invVandermonde))
     end
 
-    return Composite{T,SimpleG.Arbitrary{T},Composite{T,SimpleG.Log{T},SubGridType}}(panel, subgrids)
+    return Composite{T,typeof(panel),Composite{T,SimpleG.Log{T},SubGridType}}(panel, subgrids)
 
 end
 

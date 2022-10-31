@@ -80,22 +80,41 @@ struct Arbitrary{T<:Real,BT} <: AbstractGrid{T}
         @assert bound[1] <= grid[1]
         @assert bound[2] >= grid[end]
         BT = BoundType(BTIN, bound, [grid[1], grid[end]])
-        size = length(grid)
-        weight = zeros(Float64, size)
-        for i in 1:size
-            if i == 1
-                if size != 1
-                    weight[1] = 0.5 * (grid[2] - grid[1])
+        if BT == PeriodicBound && (bound[1] == grid[1] && bound[2] == grid[end])
+            size = length(grid) - 1
+            weight = zeros(Float64, size)
+            for i in 1:size
+                if i == 1
+                    if size != 1
+                        weight[1] = 0.5 * (grid[2] - grid[1]) + 0.5 * (bound[2] - grid[end-1])
+                    else
+                        weight[1] = 0 # allow arbitrary grid for 1 gridpoint, but integrate undefined
+                    end
+                elseif i == size
+                    weight[end] = 0.5 * (grid[end] - grid[end-1])
                 else
-                    weight[1] = 0 # allow arbitrary grid for 1 gridpoint, but integrate undefined
+                    weight[i] = 0.5 * (grid[i+1] - grid[i-1])
                 end
-            elseif i == size
-                weight[end] = 0.5 * (grid[end] - grid[end-1])
-            else
-                weight[i] = 0.5 * (grid[i+1] - grid[i-1])
             end
+            return new{T,BT}(bound, size, grid[1:end-1], weight)
+        else
+            size = length(grid)
+            weight = zeros(Float64, size)
+            for i in 1:size
+                if i == 1
+                    if size != 1
+                        weight[1] = 0.5 * (grid[2] - grid[1])
+                    else
+                        weight[1] = 0 # allow arbitrary grid for 1 gridpoint, but integrate undefined
+                    end
+                elseif i == size
+                    weight[end] = 0.5 * (grid[end] - grid[end-1])
+                else
+                    weight[i] = 0.5 * (grid[i+1] - grid[i-1])
+                end
+            end
+            return new{T,BT}(bound, size, grid, weight)
         end
-        return new{T,BT}(bound, size, grid, weight)
     end
 end
 
@@ -120,6 +139,18 @@ function Base.floor(grid::AbstractGrid, x) #where {T}
 
     result = searchsortedfirst(grid.grid, x) - 1
     return Base.floor(Int, result)
+end
+
+function Base.floor(grid::Arbitrary{T,PeriodicBound}, x) where {T}
+    fracx = (x - grid.grid[1]) / (grid.bound[2] - grid.bound[1])
+    fracx = (fracx % 1 + 1) % 1
+    x = grid.grid[1] + fracx * (grid.bound[2] - grid.bound[1])
+    if x < grid.grid[1] || x > grid.grid[end]
+        return grid.size
+    else
+        result = searchsortedfirst(grid.grid, x) - 1
+        return Base.floor(Int, result)
+    end
 end
 
 Base.length(grid::AbstractGrid) = grid.size
@@ -178,7 +209,6 @@ struct Uniform{T<:AbstractFloat,BT} <: AbstractGrid{T}
     size::Int
     grid::Vector{T}
     weight::Vector{T}
-
 end
 """
     function Uniform{T}(bound, N) where {T<:AbstractFloat}
@@ -190,20 +220,28 @@ function Uniform{T,BTIN}(bound, N;
     @assert bound[1] <= gpbound[1]
     @assert bound[2] >= gpbound[2]
     BT = BoundType(BTIN, bound, gpbound)
-    Ntot = N - 1
-    interval = (gpbound[2] - gpbound[1]) / Ntot
-    grid = gpbound[1] .+ Vector(1:N) .* interval .- (interval)
-    weight = similar(grid)
-    for i in 1:N
-        if i == 1
-            weight[1] = 0.5 * (grid[2] - bound[1])
-        elseif i == N
-            weight[end] = 0.5 * (bound[2] - grid[end-1])
-        else
-            weight[i] = 0.5 * (grid[i+1] - grid[i-1])
+    if BT == PeriodicBound && (bound[1] == gpbound[1] && bound[2] == gpbound[2])
+        Ntot = N
+        interval = (gpbound[2] - gpbound[1]) / Ntot
+        grid = gpbound[1] .+ Vector(1:N) .* interval .- (interval)
+        weight = inverval .* ones(N)
+        return Uniform{T,BT}(bound, N, grid, weight)
+    else
+        Ntot = N - 1
+        interval = (gpbound[2] - gpbound[1]) / Ntot
+        grid = gpbound[1] .+ Vector(1:N) .* interval .- (interval)
+        weight = similar(grid)
+        for i in 1:N
+            if i == 1
+                weight[1] = 0.5 * (grid[2] - bound[1])
+            elseif i == N
+                weight[end] = 0.5 * (bound[2] - grid[end-1])
+            else
+                weight[i] = 0.5 * (grid[i+1] - grid[i-1])
+            end
         end
+        return Uniform{T,BT}(bound, N, grid, weight)
     end
-    return Uniform{T,BT}(bound, N, grid, weight)
 end
 function Uniform{T}(bound, N;
     gpbound=bound,
@@ -235,6 +273,17 @@ function Base.floor(grid::Uniform{T}, x) where {T}
         return Base.floor(Int, result)
     end
 
+end
+function Base.floor(grid::Uniform{T,PeriodicBound}, x) where {T}
+    result = (x - grid.grid[1]) / (grid.bound[2] - grid.bound[1]) * (grid.size - 1)
+    result = (result % grid.size + grid.size) % grid.size + 1
+    if result < 1
+        return grid.size
+    elseif result >= grid.size
+        return grid.size
+    else
+        return Base.floor(Int, result)
+    end
 end
 
 """
