@@ -501,9 +501,10 @@ first floor on panel to find subgrid, then call interp1D on subgrid
 """
 function interp1D(::CompositeInterp, data, xgrid::GT, x) where {GT}
     if isa(SimpleG.BoundType(GT), SimpleG.PeriodicBound)
+        # println("periodic composite interp")
         i = floor(xgrid.panel, x)
         head, tail = xgrid.inits[i], xgrid.inits[i] + xgrid.subgrids[i].size - 1
-        if tail == length(grid)
+        if tail == length(xgrid)
             return interp1D(view(data, [head:tail-1..., 1]), xgrid.subgrids[i], x)
         else
             return interp1D(view(data, head:tail), xgrid.subgrids[i], x)
@@ -717,16 +718,27 @@ call integrate1D for each subgrid and return the sum.
 - xgrid: one-dimensional grid of x
 - data: one-dimensional array of data
 """
-function integrate1D(::CompositeIntegrate, data, xgrid)
-    result = eltype(data)(0.0)
+function integrate1D(::CompositeIntegrate, data, xgrid::GT) where {GT}
+    if isa(SimpleG.BoundType(GT), SimpleG.PeriodicBound)
+        result = eltype(data)(0.0)
+        for pi in 1:length(xgrid.subgrids)
+            head, tail = xgrid.inits[pi], xgrid.inits[pi] + xgrid.subgrids[pi].size - 1
+            if tail == length(xgrid)
+                result += integrate1D(view(data, [head:tail-1..., 1]), xgrid.subgrids[pi])
+            else
+                result += integrate1D(view(data, head:tail), xgrid.subgrids[pi])
+            end
+        end
+        return result
+    else
+        result = eltype(data)(0.0)
 
-    for pi in 1:xgrid.panel.size-1
-        head, tail = xgrid.inits[pi], xgrid.inits[pi] + xgrid.subgrids[pi].size - 1
-        result += integrate1D(view(data, head:tail), xgrid.subgrids[pi])
-        currgrid = xgrid.subgrids[pi]
+        for pi in 1:xgrid.panel.size-1
+            head, tail = xgrid.inits[pi], xgrid.inits[pi] + xgrid.subgrids[pi].size - 1
+            result += integrate1D(view(data, head:tail), xgrid.subgrids[pi])
+        end
+        return result
     end
-    return result
-
 end
 
 """

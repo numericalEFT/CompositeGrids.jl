@@ -3,7 +3,7 @@
 
     @testset "SimpleGrids with PeriodicBound" begin
         @testset "Arbitrary" begin
-            grid = [0.0, 0.1, 0.5, 1.0, 2.0, 3.0, π, 6.0, 2π]
+            grid = [0.0, 0.1, 0.5, 1.0, 2.0, 3.0, 3.13, π, 3.15, 4.0, 5.0, 6.0, 6.28, 2π]
             ag = SimpleG.Arbitrary{Float64}(grid; boundtype=SimpleG.PERIODICBOUND)
             println(ag.grid)
             @test ag.grid == grid[1:end-1]
@@ -19,10 +19,15 @@
             f(x) = π - abs(x - π)
             data = f.(ag.grid)
 
+            @test f(δ) ≈ Interp.interp1D(data, ag, δ)
+            @test f(2π - δ) ≈ Interp.interp1D(data, ag, 2π - δ)
             testx = rand(rng, 10) * 2π
             for x in testx
                 @test f(x) ≈ Interp.interp1D(data, ag, x)
             end
+
+            # @test Interp.integrate1D(data, ag) ≈ π^2
+            @test isapprox(Interp.integrate1D(data, ag), π^2, atol=1e-3)
         end
 
         @testset "Uniform" begin
@@ -42,10 +47,14 @@
             f(x) = π - abs(x - π)
             data = f.(ag.grid)
 
+            @test f(δ) ≈ Interp.interp1D(data, ag, δ)
+            @test f(2π - δ) ≈ Interp.interp1D(data, ag, 2π - δ)
             testx = rand(rng, 10) * 2π
             for x in testx
                 @test f(x) ≈ Interp.interp1D(data, ag, x)
             end
+
+            @test Interp.integrate1D(data, ag) ≈ π^2
         end
 
         @testset "Composite" begin
@@ -64,10 +73,14 @@
             f(x) = π - abs(x - π)
             data = f.(ag.grid)
 
+            @test f(δ) ≈ Interp.interp1D(data, ag, δ)
+            @test f(2π - δ) ≈ Interp.interp1D(data, ag, 2π - δ)
             testx = rand(rng, 10) * 2π
             for x in testx
                 @test f(x) ≈ Interp.interp1D(data, ag, x)
             end
+
+            @test Interp.integrate1D(data, ag) ≈ π^2
         end
     end
 

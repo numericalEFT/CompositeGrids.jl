@@ -33,14 +33,14 @@ const PERIODICBOUND = PeriodicBound()
 # decide by relation between bound and [grid[1], grid[end]] for open and close
 function BoundType(::Type, bound, gpbound)
     if bound[1] == gpbound[1] && bound[2] == gpbound[2]
-        return ClosedBound
+        return ClosedBound()
     else
-        return OpenBound
+        return OpenBound()
     end
 end
 
 # periodic if claimed periodic
-BoundType(::Type{<:PeriodicBound}, bound, gpbound) = PeriodicBound
+BoundType(::Type{<:PeriodicBound}, bound, gpbound) = PeriodicBound()
 
 # for grids
 
@@ -79,7 +79,7 @@ struct Arbitrary{T<:Real,BT} <: AbstractGrid{T}
         # allow customized bound that's different from [grid[1], grid[end]]
         @assert bound[1] <= grid[1]
         @assert bound[2] >= grid[end]
-        BT = BoundType(BTIN, bound, [grid[1], grid[end]])
+        BT = typeof(BoundType(BTIN, bound, [grid[1], grid[end]]))
         if BT == PeriodicBound && (bound[1] == grid[1] && bound[2] == grid[end])
             size = length(grid) - 1
             weight = zeros(Float64, size)
@@ -223,7 +223,7 @@ function Uniform{T,BTIN}(bound, N;
     gpbound=bound) where {T<:AbstractFloat,BTIN}
     @assert bound[1] <= gpbound[1]
     @assert bound[2] >= gpbound[2]
-    BT = BoundType(BTIN, bound, gpbound)
+    BT = typeof(BoundType(BTIN, bound, gpbound))
     if BT == PeriodicBound && (bound[1] == gpbound[1] && bound[2] == gpbound[2])
         Ntot = N
         interval = (gpbound[2] - gpbound[1]) / Ntot

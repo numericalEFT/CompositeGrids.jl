@@ -90,7 +90,7 @@ end
 
 function SimpleG.BoundType(::Type{<:Composite{T,PG,SG}}) where {T,PG,SG}
     if isa(SimpleG.BoundType(PG), SimpleG.PeriodicBound)
-        return SimpleG.PeriodicBound
+        return SimpleG.PeriodicBound()
     else
         return SimpleG.BoundType(SG)
     end
