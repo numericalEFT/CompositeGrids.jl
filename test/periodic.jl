@@ -47,6 +47,29 @@
                 @test f(x) ≈ Interp.interp1D(data, ag, x)
             end
         end
+
+        @testset "Composite" begin
+            ag = CompositeGrid.LogDensedGrid(:uniform, [0.0, 2π], [π,], 4, 0.01, 4; isperiodic=true)
+            println(ag.grid)
+            println(ag.panel.grid)
+
+            # test floor
+            δ = 1e-6
+            for (i, x) in enumerate(ag)
+                @test floor(ag, x + δ) == i
+                @test floor(ag, x - δ) == ((i + length(ag) - 2) % length(ag)) + 1
+            end
+
+            # interp
+            f(x) = π - abs(x - π)
+            data = f.(ag.grid)
+
+            testx = rand(rng, 10) * 2π
+            for x in testx
+                @test f(x) ≈ Interp.interp1D(data, ag, x)
+            end
+        end
     end
+
 
 end

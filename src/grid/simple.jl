@@ -74,8 +74,8 @@ struct Arbitrary{T<:Real,BT} <: AbstractGrid{T}
 
     create Arbitrary from grid.
     """
-    function Arbitrary{T}(grid;
-        bound=[grid[1], grid[end]], boundtype::BTIN=CLOSEDBOUND) where {T<:Real,BTIN}
+    function Arbitrary{T,BTIN}(grid;
+        bound=[grid[1], grid[end]]) where {T<:Real,BTIN}
         # allow customized bound that's different from [grid[1], grid[end]]
         @assert bound[1] <= grid[1]
         @assert bound[2] >= grid[end]
@@ -117,6 +117,10 @@ struct Arbitrary{T<:Real,BT} <: AbstractGrid{T}
         end
     end
 end
+Arbitrary{T}(grid;
+    bound=[grid[1], grid[end]],
+    boundtype::BTIN=CLOSEDBOUND) where {T<:Real,BTIN} = Arbitrary{T,BTIN}(grid; bound=bound)
+
 
 """
     function Base.floor(grid::AbstractGrid, x) #where {T}

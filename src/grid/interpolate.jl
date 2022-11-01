@@ -499,10 +499,20 @@ first floor on panel to find subgrid, then call interp1D on subgrid
 - data: one-dimensional array of data
 - x: x
 """
-function interp1D(::CompositeInterp, data, xgrid, x)
-    i = floor(xgrid.panel, x)
-    head, tail = xgrid.inits[i], xgrid.inits[i] + xgrid.subgrids[i].size - 1
-    return interp1D(view(data, head:tail), xgrid.subgrids[i], x)
+function interp1D(::CompositeInterp, data, xgrid::GT, x) where {GT}
+    if isa(SimpleG.BoundType(GT), SimpleG.PeriodicBound)
+        i = floor(xgrid.panel, x)
+        head, tail = xgrid.inits[i], xgrid.inits[i] + xgrid.subgrids[i].size - 1
+        if tail == length(grid)
+            return interp1D(view(data, [head:tail-1..., 1]), xgrid.subgrids[i], x)
+        else
+            return interp1D(view(data, head:tail), xgrid.subgrids[i], x)
+        end
+    else
+        i = floor(xgrid.panel, x)
+        head, tail = xgrid.inits[i], xgrid.inits[i] + xgrid.subgrids[i].size - 1
+        return interp1D(view(data, head:tail), xgrid.subgrids[i], x)
+    end
 end
 
 
