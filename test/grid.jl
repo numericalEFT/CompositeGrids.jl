@@ -169,7 +169,7 @@ end
         gauss2 = SimpleGrid.GaussLegendre{Float64}([0.5, 1.0], 4)
         comp = CompositeGrid.Composite{
             Float64,
-            SimpleGrid.Uniform{Float64},
+            typeof(uniform),
             SimpleGrid.GaussLegendre{Float64}
         }(uniform, [gauss1, gauss2])
 

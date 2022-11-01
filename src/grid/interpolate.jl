@@ -400,6 +400,30 @@ linear interpolation of data(x)
     return gx
 end
 
+@inline function linear1Dperiodic(data, xgrid, x)
+    # normalize x
+    fracx = (x - xgrid.grid[1]) / (xgrid.bound[2] - xgrid.bound[1])
+    fracx = (fracx % 1 + 1) % 1
+    x = xgrid.grid[1] + fracx * (xgrid.bound[2] - xgrid.bound[1])
+
+    xarray = xgrid.grid
+
+    xi0 = floor(xgrid, x)
+    xi1 = xi0 + 1
+    if xi0 != length(xgrid)
+        dx0, dx1 = x - xarray[xi0], xarray[xi1] - x
+        d0, d1 = data[xi0], data[xi1]
+    else
+        dx0, dx1 = x - xarray[xi0], xarray[1] - xgrid.bound[1] + xgrid.bound[2] - x
+        d0, d1 = data[xi0], data[1]
+    end
+
+    g = d0 * dx1 + d1 * dx0
+
+    gx = g / (dx0 + dx1)
+    return gx
+end
+
 """
     function interp1D(data, xgrid, x; axis=1, method=InterpStyle(T))
 
@@ -442,8 +466,12 @@ linear interpolation of data(x), use floor and linear1D
 - data: one-dimensional array of data
 - x: x
 """
-function interp1D(::LinearInterp, data, xgrid, x)
-    return linear1D(data, xgrid, x)
+function interp1D(::LinearInterp, data, xgrid::GT, x) where {GT}
+    if isa(SimpleG.BoundType(GT), SimpleG.PeriodicBound)
+        return linear1Dperiodic(data, xgrid, x)
+    else
+        return linear1D(data, xgrid, x)
+    end
 end
 
 """
@@ -471,10 +499,21 @@ first floor on panel to find subgrid, then call interp1D on subgrid
 - data: one-dimensional array of data
 - x: x
 """
-function interp1D(::CompositeInterp, data, xgrid, x)
-    i = floor(xgrid.panel, x)
-    head, tail = xgrid.inits[i], xgrid.inits[i] + xgrid.subgrids[i].size - 1
-    return interp1D(view(data, head:tail), xgrid.subgrids[i], x)
+function interp1D(::CompositeInterp, data, xgrid::GT, x) where {GT}
+    if isa(SimpleG.BoundType(GT), SimpleG.PeriodicBound)
+        # println("periodic composite interp")
+        i = floor(xgrid.panel, x)
+        head, tail = xgrid.inits[i], xgrid.inits[i] + xgrid.subgrids[i].size - 1
+        if tail == length(xgrid)
+            return interp1D(view(data, [head:tail-1..., 1]), xgrid.subgrids[i], x)
+        else
+            return interp1D(view(data, head:tail), xgrid.subgrids[i], x)
+        end
+    else
+        i = floor(xgrid.panel, x)
+        head, tail = xgrid.inits[i], xgrid.inits[i] + xgrid.subgrids[i].size - 1
+        return interp1D(view(data, head:tail), xgrid.subgrids[i], x)
+    end
 end
 
 
@@ -679,16 +718,27 @@ call integrate1D for each subgrid and return the sum.
 - xgrid: one-dimensional grid of x
 - data: one-dimensional array of data
 """
-function integrate1D(::CompositeIntegrate, data, xgrid)
-    result = eltype(data)(0.0)
+function integrate1D(::CompositeIntegrate, data, xgrid::GT) where {GT}
+    if isa(SimpleG.BoundType(GT), SimpleG.PeriodicBound)
+        result = eltype(data)(0.0)
+        for pi in 1:length(xgrid.subgrids)
+            head, tail = xgrid.inits[pi], xgrid.inits[pi] + xgrid.subgrids[pi].size - 1
+            if tail == length(xgrid)
+                result += integrate1D(view(data, [head:tail-1..., 1]), xgrid.subgrids[pi])
+            else
+                result += integrate1D(view(data, head:tail), xgrid.subgrids[pi])
+            end
+        end
+        return result
+    else
+        result = eltype(data)(0.0)
 
-    for pi in 1:xgrid.panel.size-1
-        head, tail = xgrid.inits[pi], xgrid.inits[pi] + xgrid.subgrids[pi].size - 1
-        result += integrate1D(view(data, head:tail), xgrid.subgrids[pi])
-        currgrid = xgrid.subgrids[pi]
+        for pi in 1:xgrid.panel.size-1
+            head, tail = xgrid.inits[pi], xgrid.inits[pi] + xgrid.subgrids[pi].size - 1
+            result += integrate1D(view(data, head:tail), xgrid.subgrids[pi])
+        end
+        return result
     end
-    return result
-
 end
 
 """
@@ -880,7 +930,7 @@ while histogram is stored on grid.
 function locate(grid::AbstractGrid, x)
     @assert x >= grid.bound[1] && x <= grid.bound[2]
     i = floor(grid, x)
-    return abs(x-grid[i])<abs(x-grid[i+1]) ? i : (i+1)
+    return abs(x - grid[i]) < abs(x - grid[i+1]) ? i : (i + 1)
 end
 
 """
@@ -901,11 +951,11 @@ It is guaranteed that volume(grid)==sum(volume(grid, i) for i in 1:length(grid))
 """
 function volume(grid::AbstractGrid, i)
     if i != 1 && i != length(grid)
-        return (grid[i+1]-grid[i-1])/2
+        return (grid[i+1] - grid[i-1]) / 2
     elseif i == 1
-        return (grid[i+1]+grid[i])/2 - grid.bound[1]
+        return (grid[i+1] + grid[i]) / 2 - grid.bound[1]
     else
-        return grid.bound[2]-(grid[i]+grid[i-1])/2
+        return grid.bound[2] - (grid[i] + grid[i-1]) / 2
     end
 end
 volume(grid::AbstractGrid) = grid.bound[2] - grid.bound[1]

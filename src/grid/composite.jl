@@ -30,7 +30,7 @@ create Composite grid from panel and subgrids.
 if the boundary grid point of two neighbor subgrids are too close, they will be combined
 in the whole grid.
 """
-struct Composite{T<:AbstractFloat,PG,SG} <: SimpleG.ClosedGrid{T}
+struct Composite{T<:AbstractFloat,PG,SG} <: SimpleG.AbstractGrid{T}
     bound::SVector{2,T}
     size::Int
     grid::Vector{T}
@@ -50,19 +50,24 @@ struct Composite{T<:AbstractFloat,PG,SG} <: SimpleG.ClosedGrid{T}
     """
     function Composite{T,PG,SG}(panel, subgrids) where {T<:AbstractFloat,PG,SG}
         bound = [panel[1], panel[end]]
-        @assert panel.size - 1 == length(subgrids)
+        if isa(SimpleG.BoundType(PG), SimpleG.PeriodicBound)
+            @assert panel.size == length(subgrids)
+        else
+            @assert panel.size - 1 == length(subgrids)
+        end
         inits = zeros(Int, length(subgrids))
         grid = Vector{T}([])
         for i in 1:length(subgrids)
             @assert panel[i] == subgrids[i].bound[1] "$(panel[i])!=$(subgrids[i].bound[1])"
-            @assert panel[i+1] == subgrids[i].bound[2] "$(panel[i+1])!=$(subgrids[i].bound[2])"
+            # @assert panel[i+1] == subgrids[i].bound[2] "$(panel[i+1])!=$(subgrids[i].bound[2])"
             if i == 1
                 inits[i] = 1
                 append!(grid, subgrids[i].grid)
             else
                 if abs(grid[end] - subgrids[i].grid[1]) < eps(T) * 10
-                    inits[i] = length(grid)
-                    append!(grid, subgrids[i].grid[2:end])
+                    pop!(grid) # take out last gridpoint
+                    inits[i] = length(grid) + 1
+                    append!(grid, subgrids[i].grid[1:end])
                 else
                     inits[i] = length(grid) + 1
                     append!(grid, subgrids[i].grid)
@@ -70,11 +75,25 @@ struct Composite{T<:AbstractFloat,PG,SG} <: SimpleG.ClosedGrid{T}
             end
 
         end
-        size = length(grid)
+        if isa(SimpleG.BoundType(PG), SimpleG.PeriodicBound) && grid[end] == bound[2]
+            size = length(grid) - 1
+            pop!(grid)
+        else
+            size = length(grid)
+        end
+
 
         return new{T,PG,SG}(bound, size, grid, panel, subgrids, inits)
     end
 
+end
+
+function SimpleG.BoundType(::Type{<:Composite{T,PG,SG}}) where {T,PG,SG}
+    if isa(SimpleG.BoundType(PG), SimpleG.PeriodicBound)
+        return SimpleG.PeriodicBound()
+    else
+        return SimpleG.BoundType(SG)
+    end
 end
 
 function Base.show(io::IO, grid::Composite; isSimplified=false)
@@ -107,19 +126,30 @@ if floor on panel grid is needed, simply call floor(grid.panel, x).
 return 1 for x<grid[1] and grid.size-1 for x>grid[end].
 """
 function Base.floor(grid::Composite{T,PG,SG}, x) where {T,PG,SG}
-    if SG <: SimpleG.ClosedGrid
+    if isa(SimpleG.BoundType(PG), SimpleG.PeriodicBound)
+        if x <= grid.grid[1] || x >= grid.grid[end]
+            return grid.size
+        end
+        if isa(SimpleG.BoundType(SG), SimpleG.ClosedBound)
+            i = floor(grid.panel, x)
+            return grid.inits[i] - 1 + floor(grid.subgrids[i], x)
+        else
+            result = searchsortedfirst(grid.grid, x) - 1
+            return result
+        end
+    elseif isa(SimpleG.BoundType(SG), SimpleG.ClosedBound)
         i = floor(grid.panel, x)
         return grid.inits[i] - 1 + floor(grid.subgrids[i], x)
-    end
+    else
+        if x <= grid.grid[1]
+            return 1
+        elseif x >= grid.grid[end]
+            return grid.size - 1
+        end
 
-    if x <= grid.grid[1]
-        return 1
-    elseif x >= grid.grid[end]
-        return grid.size - 1
+        result = searchsortedfirst(grid.grid, x) - 1
+        return result
     end
-
-    result = searchsortedfirst(grid.grid, x) - 1
-    return result
 end
 
 @inline function denseindex(grid::Composite{T,PG,SG}) where {T,PG,SG}
@@ -159,7 +189,7 @@ function CompositeLogGrid(type, bound, N, minterval, d2s, order, T=Float64, invV
     elseif type == :gauss
         SubGridType = SimpleG.GaussLegendre{T}
     elseif type == :uniform
-        SubGridType = SimpleG.Uniform{T}
+        SubGridType = SimpleG.Uniform{T,SimpleG.ClosedBound}
     else
         error("$type not implemented!")
     end
@@ -197,13 +227,13 @@ if two densed point is too close to each other, they will be combined.
 - `minterval` : minimum interval of panel grid
 - `order` : number of grid points of subgrid
 """
-function LogDensedGrid(type, bound, dense_at, N, minterval, order, T=Float64)
+function LogDensedGrid(type, bound, dense_at, N, minterval, order, T=Float64; isperiodic=false)
     if type == :cheb
         SubGridType = SimpleG.BaryCheb{T}
     elseif type == :gauss
         SubGridType = SimpleG.GaussLegendre{T}
     elseif type == :uniform
-        SubGridType = SimpleG.Uniform{T}
+        SubGridType = SimpleG.Uniform{T,SimpleG.ClosedBound}
     else
         error("$type not implemented!")
     end
@@ -272,15 +302,27 @@ function LogDensedGrid(type, bound, dense_at, N, minterval, order, T=Float64)
         push!(d2slist, true)
     end
 
-    panel = SimpleG.Arbitrary{T}(panelgrid)
-    #println("panel:",panel.grid)
-    subgrids = Vector{Composite{T,SimpleG.Log{T},SubGridType}}([])
-    invVandermonde = SimpleG.invvandermonde(order)
-    for i in 1:length(panel.grid)-1
-        push!(subgrids, CompositeLogGrid(type, [panel[i], panel[i+1]], N, minterval, d2slist[i], order, T, invVandermonde))
-    end
+    if isperiodic
+        panel = SimpleG.Arbitrary{T,SimpleG.PeriodicBound}(panelgrid)
+        subgrids = Vector{Composite{T,SimpleG.Log{T},SubGridType}}([])
+        invVandermonde = SimpleG.invvandermonde(order)
+        for i in 1:length(panel.grid)-1
+            push!(subgrids, CompositeLogGrid(type, [panel[i], panel[i+1]], N, minterval, d2slist[i], order, T, invVandermonde))
+        end
+        push!(subgrids, CompositeLogGrid(type, [panel[end], panel.bound[2]], N, minterval, d2slist[end], order, T, invVandermonde))
+        return Composite{T,typeof(panel),Composite{T,SimpleG.Log{T},SubGridType}}(panel, subgrids)
 
-    return Composite{T,SimpleG.Arbitrary{T},Composite{T,SimpleG.Log{T},SubGridType}}(panel, subgrids)
+    else
+        panel = SimpleG.Arbitrary{T}(panelgrid)
+        subgrids = Vector{Composite{T,SimpleG.Log{T},SubGridType}}([])
+        invVandermonde = SimpleG.invvandermonde(order)
+        for i in 1:length(panel.grid)-1
+            push!(subgrids, CompositeLogGrid(type, [panel[i], panel[i+1]], N, minterval, d2slist[i], order, T, invVandermonde))
+        end
+
+        return Composite{T,typeof(panel),Composite{T,SimpleG.Log{T},SubGridType}}(panel, subgrids)
+    end
+    #println("panel:",panel.grid)
 
 end
 

@@ -5,8 +5,8 @@ and optimized grids like barycheb for interpolation and gausslegendre for integr
 """
 module SimpleG
 
-export AbstractGrid, OpenGrid, ClosedGrid, Uniform, BaryCheb, GaussLegendre, Arbitrary, Log, denseindex
-
+export AbstractGrid, Uniform, BaryCheb, GaussLegendre, Arbitrary, Log, denseindex
+export GridBoundType, OpenBound, ClosedBound, PeriodicBound
 using StaticArrays, FastGaussQuadrature
 
 using ..BaryChebTools
@@ -21,12 +21,36 @@ All Grids are derived from AbstractGrid; ClosedGrid has bound[1], bound[2] == gr
 while OpenGrid has bound[1]<grid[1]<grid[end]<bound[2]
 """
 abstract type AbstractGrid{T} <: AbstractArray{T,1} end
-abstract type OpenGrid{T} <: AbstractGrid{T} end
-abstract type ClosedGrid{T} <: AbstractGrid{T} end
+
+abstract type GridBoundType end
+struct OpenBound <: GridBoundType end
+struct ClosedBound <: GridBoundType end
+struct PeriodicBound <: GridBoundType end
+const OPENBOUND = OpenBound()
+const CLOSEDBOUND = ClosedBound()
+const PERIODICBOUND = PeriodicBound()
+
+# decide by relation between bound and [grid[1], grid[end]] for open and close
+function BoundType(::Type, bound, gpbound)
+    if bound[1] == gpbound[1] && bound[2] == gpbound[2]
+        return ClosedBound()
+    else
+        return OpenBound()
+    end
+end
+
+# periodic if claimed periodic
+BoundType(::Type{<:PeriodicBound}, bound, gpbound) = PeriodicBound()
+
+# for grids
+
+# abstract type OpenGrid{T} <: AbstractGrid{T} end
+# abstract type ClosedGrid{T} <: AbstractGrid{T} end
+# abstract type PeriodicGrid{T} <: AbstractGrid{T} end
 
 """
 
-    struct Arbitrary{T<:AbstractFloat} <: ClosedGrid
+    struct Arbitrary{T<:AbstractFloat} <: AbstractGrid
 
 Arbitrary grid generated from given sorted grid.
 
@@ -39,37 +63,71 @@ Arbitrary grid generated from given sorted grid.
 #Constructor:
 -    function Arbitrary{T}(grid) where {T<:AbstractFloat}
 """
-struct Arbitrary{T<:Real} <: ClosedGrid{T}
+struct Arbitrary{T<:Real,BT} <: AbstractGrid{T}
     bound::SVector{2,T}
     size::Int
     grid::Vector{T}
     weight::Vector{Float64}
 
     """
-        function Arbitrary{T}(grid) where {T<:AbstractFloat}
+        function Arbitrary{T}(grid; bound=[grid[1], grid[end]]) where {T<:AbstractFloat}
 
     create Arbitrary from grid.
     """
-    function Arbitrary{T}(grid) where {T<:Real}
-        bound = [grid[1], grid[end]]
-        size = length(grid)
-        weight = zeros(Float64, size)
-        for i in 1:size
-            if i == 1
-                if size != 1
-                    weight[1] = 0.5 * (grid[2] - grid[1])
+    function Arbitrary{T,BTIN}(grid;
+        bound=[grid[1], grid[end]]) where {T<:Real,BTIN}
+        # allow customized bound that's different from [grid[1], grid[end]]
+        @assert bound[1] <= grid[1]
+        @assert bound[2] >= grid[end]
+        BT = typeof(BoundType(BTIN, bound, [grid[1], grid[end]]))
+        if BT == PeriodicBound && (bound[1] == grid[1] && bound[2] == grid[end])
+            size = length(grid) - 1
+            weight = zeros(Float64, size)
+            for i in 1:size
+                if i == 1
+                    if size != 1
+                        weight[1] = 0.5 * (grid[2] - grid[1]) + 0.5 * (bound[2] - grid[end-1])
+                    else
+                        weight[1] = 0 # allow arbitrary grid for 1 gridpoint, but integrate undefined
+                    end
+                elseif i == size
+                    weight[end] = 0.5 * (grid[end] - grid[end-1])
                 else
-                    weight[1] = 0 # allow arbitrary grid for 1 gridpoint, but integrate undefined
+                    weight[i] = 0.5 * (grid[i+1] - grid[i-1])
                 end
-            elseif i == size
-                weight[end] = 0.5 * (grid[end] - grid[end-1])
-            else
-                weight[i] = 0.5 * (grid[i+1] - grid[i-1])
             end
+            return new{T,BT}(bound, size, grid[1:end-1], weight)
+        else
+            size = length(grid)
+            weight = zeros(Float64, size)
+            for i in 1:size
+                if i == 1
+                    if size != 1
+                        weight[1] = 0.5 * (grid[2] - grid[1])
+                    else
+                        weight[1] = 0 # allow arbitrary grid for 1 gridpoint, but integrate undefined
+                    end
+                elseif i == size
+                    weight[end] = 0.5 * (grid[end] - grid[end-1])
+                else
+                    weight[i] = 0.5 * (grid[i+1] - grid[i-1])
+                end
+            end
+            return new{T,BT}(bound, size, grid, weight)
         end
-        return new{T}(bound, size, grid, weight)
     end
 end
+Arbitrary{T}(grid;
+    bound=[grid[1], grid[end]],
+    boundtype::BTIN=CLOSEDBOUND) where {T<:Real,BTIN} = Arbitrary{T,BTIN}(grid; bound=bound)
+function Arbitrary(grid;
+    bound=[grid[1], grid[end]],
+    isperiodic=false)
+    T = eltype(grid)
+    BTIN = isperiodic ? PeriodicBound : ClosedBound
+    Arbitrary{T,BTIN}(grid; bound=bound)
+end
+
 
 """
     function Base.floor(grid::AbstractGrid, x) #where {T}
@@ -92,6 +150,18 @@ function Base.floor(grid::AbstractGrid, x) #where {T}
 
     result = searchsortedfirst(grid.grid, x) - 1
     return Base.floor(Int, result)
+end
+
+function Base.floor(grid::Arbitrary{T,PeriodicBound}, x) where {T}
+    fracx = (x - grid.grid[1]) / (grid.bound[2] - grid.bound[1])
+    fracx = (fracx % 1 + 1) % 1
+    x = grid.grid[1] + fracx * (grid.bound[2] - grid.bound[1])
+    if x < grid.grid[1] || x > grid.grid[end]
+        return grid.size
+    else
+        result = searchsortedfirst(grid.grid, x) - 1
+        return Base.floor(Int, result)
+    end
 end
 
 Base.length(grid::AbstractGrid) = grid.size
@@ -132,7 +202,7 @@ function Base.show(io::IO, grid::AbstractGrid; isSimplified=false)
 end
 
 """
-    struct Uniform{T<:AbstractFloat} <: ClosedGrid
+    struct Uniform{T<:AbstractFloat} <: AbstractGrid
 
 Uniform grid generated on [bound[1], bound[2]] with N points
 
@@ -145,33 +215,56 @@ Uniform grid generated on [bound[1], bound[2]] with N points
 #Constructor:
 -    function Uniform{T}(bound, size) where {T<:AbstractFloat}
 """
-struct Uniform{T<:AbstractFloat} <: ClosedGrid{T}
+struct Uniform{T<:AbstractFloat,BT} <: AbstractGrid{T}
     bound::SVector{2,T}
     size::Int
     grid::Vector{T}
     weight::Vector{T}
-
-    """
-        function Uniform{T}(bound, N) where {T<:AbstractFloat}
-
-    create Uniform grid.
-    """
+end
+"""
     function Uniform{T}(bound, N) where {T<:AbstractFloat}
+
+create Uniform grid.
+"""
+function Uniform{T,BTIN}(bound, N;
+    gpbound=bound) where {T<:AbstractFloat,BTIN}
+    @assert bound[1] <= gpbound[1]
+    @assert bound[2] >= gpbound[2]
+    BT = typeof(BoundType(BTIN, bound, gpbound))
+    if BT == PeriodicBound && (bound[1] == gpbound[1] && bound[2] == gpbound[2])
+        Ntot = N
+        interval = (gpbound[2] - gpbound[1]) / Ntot
+        grid = gpbound[1] .+ Vector(1:N) .* interval .- (interval)
+        weight = interval .* ones(N)
+        return Uniform{T,BT}(bound, N, grid, weight)
+    else
         Ntot = N - 1
-        interval = (bound[2] - bound[1]) / Ntot
-        grid = bound[1] .+ Vector(1:N) .* interval .- (interval)
+        interval = (gpbound[2] - gpbound[1]) / Ntot
+        grid = gpbound[1] .+ Vector(1:N) .* interval .- (interval)
         weight = similar(grid)
         for i in 1:N
             if i == 1
-                weight[1] = 0.5 * (grid[2] - grid[1])
+                weight[1] = 0.5 * (grid[2] - bound[1])
             elseif i == N
-                weight[end] = 0.5 * (grid[end] - grid[end-1])
+                weight[end] = 0.5 * (bound[2] - grid[end-1])
             else
                 weight[i] = 0.5 * (grid[i+1] - grid[i-1])
             end
         end
-        return new{T}(bound, N, grid, weight)
+        return Uniform{T,BT}(bound, N, grid, weight)
     end
+end
+function Uniform{T}(bound, N;
+    gpbound=bound,
+    boundtype::BTIN=CLOSEDBOUND) where {T,BTIN}
+    return Uniform{T,BTIN}(bound, N; gpbound=gpbound)
+end
+function Uniform(bound, N;
+    gpbound=bound,
+    isperiodic=false)
+    T = typeof(bound[1])
+    BTIN = isperiodic ? PeriodicBound : ClosedBound
+    return Uniform{T,BTIN}(bound, N; gpbound=gpbound)
 end
 
 """
@@ -193,9 +286,20 @@ function Base.floor(grid::Uniform{T}, x) where {T}
     end
 
 end
+function Base.floor(grid::Uniform{T,PeriodicBound}, x) where {T}
+    result = (x - grid.grid[1]) / (grid.grid[end] - grid.grid[1]) * (grid.size - 1)
+    result = (result % grid.size + grid.size) % grid.size + 1
+    if result < 1
+        return grid.size
+    elseif result >= grid.size
+        return grid.size
+    else
+        return Base.floor(Int, result)
+    end
+end
 
 """
-    struct BaryCheb{T<:AbstractFloat} <: OpenGrid
+    struct BaryCheb{T<:AbstractFloat} <: AbstractGrid
 
 BaryCheb grid generated on [bound[1], bound[2]] with order N.
 
@@ -208,7 +312,7 @@ BaryCheb grid generated on [bound[1], bound[2]] with order N.
 #Constructor:
 -    function BaryCheb{T}(bound, size) where {T<:AbstractFloat}
 """
-struct BaryCheb{T<:AbstractFloat} <: OpenGrid{T}
+struct BaryCheb{T<:AbstractFloat} <: AbstractGrid{T}
     bound::SVector{2,T}
     size::Int
     grid::Vector{T}
@@ -243,7 +347,7 @@ struct BaryCheb{T<:AbstractFloat} <: OpenGrid{T}
 end
 
 """
-    struct GaussLegendre{T<:AbstractFloat} <: OpenGrid
+    struct GaussLegendre{T<:AbstractFloat} <: AbstractGrid
 
 GaussLegendre grid generated on [bound[1], bound[2]] with order N.
 
@@ -256,7 +360,7 @@ GaussLegendre grid generated on [bound[1], bound[2]] with order N.
 #Constructor:
 -    function GaussLegendre{T}(bound, size) where {T<:AbstractFloat}
 """
-struct GaussLegendre{T<:AbstractFloat} <: OpenGrid{T}
+struct GaussLegendre{T<:AbstractFloat} <: AbstractGrid{T}
     bound::SVector{2,T}
     size::Int
     grid::Vector{T}
@@ -280,7 +384,7 @@ struct GaussLegendre{T<:AbstractFloat} <: OpenGrid{T}
 end
 
 """
-    struct Log{T<:AbstractFloat} <: ClosedGrid
+    struct Log{T<:AbstractFloat} <: AbstractGrid
 
 Log grid generated on [bound[1], bound[2]] with N grid points.
 Minimal interval is set to be minterval. Dense to sparse if d2s, vice versa.
@@ -300,7 +404,7 @@ On [0, 1], a typical d2s Log grid looks like
 #Constructor:
 -    function Log{T}(bound, size, minterval, d2s) where {T<:AbstractFloat}
 """
-struct Log{T<:AbstractFloat} <: ClosedGrid{T}
+struct Log{T<:AbstractFloat} <: AbstractGrid{T}
     bound::SVector{2,T}
     size::Int
     grid::Vector{T}
@@ -401,5 +505,10 @@ end
 @inline function denseindex(grid::Log)
     return [(grid.d2s) ? 1 : grid.size,]
 end
+
+BoundType(::Type{<:Arbitrary{T,BT}}) where {T,BT} = BT()
+BoundType(::Type{<:Uniform{T,BT}}) where {T,BT} = BT()
+BoundType(::Type{<:Union{BaryCheb,GaussLegendre}}) = OPENBOUND
+BoundType(::Type{<:Log}) = CLOSEDBOUND
 
 end

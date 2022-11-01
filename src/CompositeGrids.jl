@@ -9,8 +9,8 @@ export BaryChebTools
 
 include("grid/simple.jl")
 const SimpleGrid = SimpleG # alias for older convention
-const AbstractGrid, OpenGrid, ClosedGrid = SimpleGrid.AbstractGrid, SimpleGrid.OpenGrid, SimpleGrid.ClosedGrid
-export SimpleG, SimpleGrid, AbstractGrid, OpenGrid, ClosedGrid, denseindex
+const AbstractGrid = SimpleGrid.AbstractGrid
+export SimpleG, SimpleGrid, AbstractGrid, denseindex
 
 include("grid/composite.jl")
 const CompositeGrid = CompositeG
