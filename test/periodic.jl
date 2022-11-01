@@ -4,7 +4,7 @@
     @testset "SimpleGrids with PeriodicBound" begin
         @testset "Arbitrary" begin
             grid = [0.0, 0.1, 0.5, 1.0, 2.0, 3.0, 3.13, π, 3.15, 4.0, 5.0, 6.0, 6.28, 2π]
-            ag = SimpleG.Arbitrary{Float64}(grid; boundtype=SimpleG.PERIODICBOUND)
+            ag = SimpleG.Arbitrary(grid; isperiodic=true)
             println(ag.grid)
             @test ag.grid == grid[1:end-1]
 
@@ -33,7 +33,7 @@
         @testset "Uniform" begin
             bound = [0, 2π]
             N = 10
-            ag = SimpleG.Uniform{Float64}(bound, N; boundtype=SimpleG.PERIODICBOUND)
+            ag = SimpleG.Uniform(bound, N; isperiodic=true)
             println(ag.grid)
 
             # test floor

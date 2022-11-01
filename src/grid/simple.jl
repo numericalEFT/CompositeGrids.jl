@@ -120,6 +120,13 @@ end
 Arbitrary{T}(grid;
     bound=[grid[1], grid[end]],
     boundtype::BTIN=CLOSEDBOUND) where {T<:Real,BTIN} = Arbitrary{T,BTIN}(grid; bound=bound)
+function Arbitrary(grid;
+    bound=[grid[1], grid[end]],
+    isperiodic=false)
+    T = eltype(grid)
+    BTIN = isperiodic ? PeriodicBound : ClosedBound
+    Arbitrary{T,BTIN}(grid; bound=bound)
+end
 
 
 """
@@ -254,8 +261,9 @@ function Uniform{T}(bound, N;
 end
 function Uniform(bound, N;
     gpbound=bound,
-    boundtype::BTIN=CLOSEDBOUND) where {BTIN}
+    isperiodic=false)
     T = typeof(bound[1])
+    BTIN = isperiodic ? PeriodicBound : ClosedBound
     return Uniform{T,BTIN}(bound, N; gpbound=gpbound)
 end
 
