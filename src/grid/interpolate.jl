@@ -409,13 +409,14 @@ end
     xarray = xgrid.grid
 
     xi0 = floor(xgrid, x)
-    xi1 = xi0 == xi0 + 1
+    xi1 = xi0 + 1
     if xi0 != length(xgrid)
         dx0, dx1 = x - xarray[xi0], xarray[xi1] - x
+        d0, d1 = data[xi0], data[xi1]
     else
         dx0, dx1 = x - xarray[xi0], xarray[1] - xgrid.bound[1] + xgrid.bound[2] - x
+        d0, d1 = data[xi0], data[1]
     end
-    d0, d1 = data[xi0], data[xi1]
 
     g = d0 * dx1 + d1 * dx0
 

@@ -6,7 +6,7 @@ and optimized grids like barycheb for interpolation and gausslegendre for integr
 module SimpleG
 
 export AbstractGrid, Uniform, BaryCheb, GaussLegendre, Arbitrary, Log, denseindex
-
+export GridBoundType, OpenBound, ClosedBound, PeriodicBound
 using StaticArrays, FastGaussQuadrature
 
 using ..BaryChebTools
@@ -224,7 +224,7 @@ function Uniform{T,BTIN}(bound, N;
         Ntot = N
         interval = (gpbound[2] - gpbound[1]) / Ntot
         grid = gpbound[1] .+ Vector(1:N) .* interval .- (interval)
-        weight = inverval .* ones(N)
+        weight = interval .* ones(N)
         return Uniform{T,BT}(bound, N, grid, weight)
     else
         Ntot = N - 1
@@ -275,7 +275,7 @@ function Base.floor(grid::Uniform{T}, x) where {T}
 
 end
 function Base.floor(grid::Uniform{T,PeriodicBound}, x) where {T}
-    result = (x - grid.grid[1]) / (grid.bound[2] - grid.bound[1]) * (grid.size - 1)
+    result = (x - grid.grid[1]) / (grid.grid[end] - grid.grid[1]) * (grid.size - 1)
     result = (result % grid.size + grid.size) % grid.size + 1
     if result < 1
         return grid.size

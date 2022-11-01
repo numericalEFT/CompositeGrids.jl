@@ -7,6 +7,7 @@ if isempty(ARGS)
     include("interpolate.jl")
     include("io.jl")
     include("mc.jl")
+    include("periodic.jl")
 else
     include(ARGS[1])
 end
