@@ -12,6 +12,12 @@
     end
 
     @testset "ArbitraryGrid" begin
+
+        # resulted grid should be sorted
+        println("Testing Arbitrary constructor, a warning should appear.")
+        arbitrary = SimpleGrid.Arbitrary{Float64}([0.0, 0.2, 0.6, 0.8, 0.4, 1.0])
+        @test arbitrary.grid == [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+
         uniform = SimpleGrid.Uniform{Float64}([0.0, 1.0], 10)
         arbitrary = SimpleGrid.Arbitrary{Float64}(uniform.grid)
         println(arbitrary)
