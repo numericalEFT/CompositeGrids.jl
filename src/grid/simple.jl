@@ -79,6 +79,11 @@ struct Arbitrary{T<:Real,BT} <: AbstractGrid{T}
         # allow customized bound that's different from [grid[1], grid[end]]
         @assert bound[1] <= grid[1]
         @assert bound[2] >= grid[end]
+        @assert allunique(grid) "Grid points should be unique!"
+        if !(issorted(grid))
+            @warn "Input grid is not sorted, using sorted instead."
+            grid = sort(grid)
+        end
         BT = typeof(BoundType(BTIN, bound, [grid[1], grid[end]]))
         if BT == PeriodicBound && (bound[1] == grid[1] && bound[2] == grid[end])
             size = length(grid) - 1
@@ -228,8 +233,10 @@ create Uniform grid.
 """
 function Uniform{T,BTIN}(bound, N;
     gpbound=bound) where {T<:AbstractFloat,BTIN}
+    @assert bound[1] < bound[2]
     @assert bound[1] <= gpbound[1]
     @assert bound[2] >= gpbound[2]
+    @assert N > 0
     BT = typeof(BoundType(BTIN, bound, gpbound))
     if BT == PeriodicBound && (bound[1] == gpbound[1] && bound[2] == gpbound[2])
         Ntot = N
@@ -324,6 +331,8 @@ struct BaryCheb{T<:AbstractFloat} <: AbstractGrid{T}
     create BaryCheb grid.
     """
     function BaryCheb{T}(bound, N) where {T<:AbstractFloat}
+        @assert bound[1] < bound[2]
+        @assert N > 1
         order = N
         x, w = barychebinit(order)
         grid = zeros(T, N)
@@ -372,6 +381,8 @@ struct GaussLegendre{T<:AbstractFloat} <: AbstractGrid{T}
     create GaussLegendre grid.
     """
     function GaussLegendre{T}(bound, N) where {T<:AbstractFloat}
+        @assert bound[1] < bound[2]
+        @assert N > 1
         order = N
         x, w = gausslegendre(order)
         grid = zeros(T, N)
@@ -419,6 +430,9 @@ struct Log{T<:AbstractFloat} <: AbstractGrid{T}
     create Log grid.
     """
     function Log{T}(bound, N, minterval, d2s) where {T<:AbstractFloat}
+        @assert bound[1] < bound[2]
+        @assert N > 1
+        @assert 0 < minterval < bound[2] - bound[1]
         grid = zeros(T, N)
         M = N - 2
         λ = (minterval / (bound[2] - bound[1]))^(1.0 / M)
