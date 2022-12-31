@@ -242,6 +242,10 @@ function LogDensedGrid(type, bound, dense_at, N, minterval, order, T=Float64; is
     @assert bound[1] <= dense_at[1] <= dense_at[end] <= bound[2]
 
     dp = Vector{T}([])
+    # construct panel points
+    # combine two panel points when they are closer than 2minterval
+    # this is to ensure 1. subgrids are constructed on a interval that is not too small
+    # and 2. the minimal interval is taken around both points
     for i in 1:length(dense_at)
         if i == 1
             if abs(dense_at[i] - bound[1]) <= 2minterval

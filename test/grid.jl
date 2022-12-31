@@ -235,6 +235,13 @@ end
         # println(comp.grid)
         comp = CompositeGrid.LogDensedGrid(:uniform, [0.0, 10.0], [0.5, 10.0], 4, 0.001, 4)
         # println(comp.grid)
+
+        # test edge case when two panel points are exactly minterval away
+        # raw panel will be [0.0, 5.0,5.001,5.002,10.0], 
+        # after construction it will be [0.0, 5.001, 10.0]
+        comp = CompositeGrid.LogDensedGrid(:uniform, [0.0, 10.0], [5.0, 5.002], 4, 0.001, 4)
+        @test length(comp.panel) == 3
+        @test isapprox(comp.panel[2], 5.001, atol=0.001)
     end
 
 end
