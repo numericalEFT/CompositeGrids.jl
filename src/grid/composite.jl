@@ -242,17 +242,21 @@ function LogDensedGrid(type, bound, dense_at, N, minterval, order, T=Float64; is
     @assert bound[1] <= dense_at[1] <= dense_at[end] <= bound[2]
 
     dp = Vector{T}([])
+    # construct panel points
+    # combine two panel points when they are closer than 2minterval
+    # this is to ensure 1. subgrids are constructed on a interval that is not too small
+    # and 2. the minimal interval is taken around both points
     for i in 1:length(dense_at)
         if i == 1
-            if abs(dense_at[i] - bound[1]) < minterval
+            if abs(dense_at[i] - bound[1]) <= 2minterval
                 push!(dp, bound[1])
-            elseif abs(dense_at[i] - bound[2]) < minterval
+            elseif abs(dense_at[i] - bound[2]) <= 2minterval
                 push!(dp, bound[2])
             else
                 push!(dp, dense_at[i])
             end
         elseif i != length(dense_at)
-            if abs(dense_at[i] - dp[end]) < minterval
+            if abs(dense_at[i] - dp[end]) <= 2minterval
                 if dp[end] != bound[1]
                     dp[end] = (dense_at[i] + dense_at[i-1]) / 2.0
                 end
@@ -260,13 +264,13 @@ function LogDensedGrid(type, bound, dense_at, N, minterval, order, T=Float64; is
                 push!(dp, dense_at[i])
             end
         else
-            if abs(dense_at[i] - bound[2]) < minterval
-                if abs(dp[end] - bound[2]) < minterval
+            if abs(dense_at[i] - bound[2]) <= 2minterval
+                if abs(dp[end] - bound[2]) <= 2minterval
                     dp[end] = bound[2]
                 else
                     push!(dp, bound[2])
                 end
-            elseif abs(dense_at[i] - dp[end]) < minterval
+            elseif abs(dense_at[i] - dp[end]) <= 2minterval
                 if dp[end] != bound[1]
                     dp[end] = (dense_at[i] + dense_at[i-1]) / 2.0
                 end
