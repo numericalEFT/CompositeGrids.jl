@@ -401,7 +401,7 @@ the grid has 2 segments, 2*(M+1)*N+1 points.
     seg = 2
     size = (M+1)*N*seg+1
     bounds = @SVector[0.0,β]
-    return UniLogs{Float64,size,seg}(bounds,minterval,M,N)
+    return UniLogs{type,size,seg}(bounds,minterval,M,N)
 end
 
 @inline function tauUL(para, M::Int,N::Int, type=Float64)
@@ -447,7 +447,7 @@ the grid has 2 segments, 2*(M+1)*N+1 points.
     seg = 2
     size = (M+1)*N*seg+1
     bounds = @SVector[0.0,Kf,maxK]
-    return UniLogs{Float64,size,seg}(bounds,minterval,M,N,[true,false],[true,true])
+    return UniLogs{type,size,seg}(bounds,minterval,M,N,[true,false],[true,true])
 end
 
 @inline function fermiKUL(para, M::Int,N::Int, type=Float64)
