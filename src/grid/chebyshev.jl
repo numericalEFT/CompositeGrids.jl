@@ -244,42 +244,44 @@ function chebdiff(n, x, f, invmat)
     return sum(intw .* f)
 end
 
-struct BaryCheb1D{T,N}
+struct BaryCheb1D{N,T}
     # wrapped barycheb 1d grid, x in [-1, 1]
     x::SVector{N, T}
     w::SVector{N, T}
     invmat::SMatrix{N, N, T}
-
-    function BaryCheb1D(T,N::Int) 
-        x, w = barychebinit(T,N)
-        invmat = invvandermonde(T,N)
-
-        return new{T,N}(x, w, invmat)
-    end
-    function  BaryCheb1D(N::Int) 
-        x, w = barychebinit(Float64,N)
-        invmat = invvandermonde(Float64,N)
-
-        return new{Float64,N}(x, w, invmat)
-    end 
 end
+
+function BaryCheb1D(N::Int,T) 
+    x, w = barychebinit(T,N)
+    invmat = invvandermonde(T,N)
+
+    return BaryCheb1D{N,T}(x, w, invmat)
+end
+function  BaryCheb1D(N::Int) 
+    x, w = barychebinit(Float64,N)
+    invmat = invvandermonde(Float64,N)
+
+    return BaryCheb1D{N,Float64}(x, w, invmat)
+end 
+
+BaryCheb1D{N}(x, w, invmat) where{N} = BaryCheb1D{N,Float64}(x, w, invmat)
 
 
 Base.getindex(bc::BaryCheb1D, i) = bc.x[i]
 
-function interp1D(data, xgrid::BaryCheb1D{T,N}, x) where {T,N}
+function interp1D(data, xgrid::BaryCheb1D{N,T}, x) where {N,T}
     return barycheb(N, x, data, xgrid.w, xgrid.x)
 end
 
-function integrate1D(data, xgrid::BaryCheb1D{T,N}; x1=-1, x2=1) where {T,N}
+function integrate1D(data, xgrid::BaryCheb1D{N,T}; x1=-1, x2=1) where {N,T}
     return chebint(N, x1, x2, data, xgrid.invmat)
 end
 
-function interpND(data, xgrid::BaryCheb1D{T,N}, xs) where {T,N}
+function interpND(data, xgrid::BaryCheb1D{N,T}, xs) where {N,T}
     return barychebND(N, xs, data, xgrid.w, xgrid.x, length(xs))
 end
 
-function integrateND(data, xgrid::BaryCheb1D{T,N}, x1s, x2s) where {T,N}
+function integrateND(data, xgrid::BaryCheb1D{N,T}, x1s, x2s) where {N,T}
     DIM = length(x1s)
     @assert DIM == length(x2s)
 
@@ -302,7 +304,7 @@ function integrateND(data, xgrid::BaryCheb1D{T,N}, x1s, x2s) where {T,N}
     return result
 end
 
-function integrateND(data, xgrid::BaryCheb1D{T,N}, DIM) where {T,N}
+function integrateND(data, xgrid::BaryCheb1D{N,T}, DIM) where {N,T}
     @assert N ^ DIM == length(data)
 
     intws = zeros(T, (DIM, N))
