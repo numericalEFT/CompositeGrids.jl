@@ -1,8 +1,8 @@
 module CompositeGrids
 using StaticArrays
 
-include("old/grid.jl")
-export Grid
+#include("old/grid.jl")
+#export Grid
 
 include("grid/chebyshev.jl")
 export BaryChebTools
