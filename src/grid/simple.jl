@@ -173,7 +173,7 @@ Base.length(grid::AbstractGrid) = grid.size
 Base.size(grid::AbstractGrid) = (grid.size,)
 Base.size(grid::AbstractGrid, I::Int) = grid.size
 
-Base.view(grid::AbstractGrid, inds...) where {N} = Base.view(grid.grid, inds...)
+Base.view(grid::AbstractGrid, inds...) = Base.view(grid.grid, inds...)
 # set is not allowed for grids
 Base.getindex(grid::AbstractGrid, i) = grid.grid[i]
 Base.firstindex(grid::AbstractGrid) = 1

@@ -452,7 +452,7 @@ function interp1D(data::AbstractMatrix, xgrid::T, x; axis=1, method=InterpStyle(
     end
 end
 
-function interp1D(data::AbstractVector, xgrid::T, x; axis=1, method=InterpStyle(T)) where {DT,T}
+function interp1D(data::AbstractVector, xgrid::T, x; axis=1, method=InterpStyle(T)) where {T}
     return interp1D(method, data, xgrid, x)
 end
 
