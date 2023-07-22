@@ -463,6 +463,8 @@ struct Log{T<:AbstractFloat} <: AbstractGrid{T}
     end
 end
 
+Log{T}(; bound, N, minterval, d2s) where {T<:AbstractFloat} = Log{T}(bound, N, minterval, d2s)
+
 function Base.show(io::IO, grid::Log; isSimplified=false)
     if isSimplified
         print(io,
