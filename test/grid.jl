@@ -211,7 +211,13 @@ end
         @test floor(comp, comp[end]) == comp.size - 1
         @test floor(comp, 1.0) == comp.size - 1
 
-        comp = CompositeGrid.LogDensedGrid(:uniform, [0.0, 10.0], [0.0, 1.0, 1.0, 2.0, 2.000001], 4, 0.001, 4)
+        # comp = CompositeGrid.LogDensedGrid(:uniform, [0.0, 10.0], [0.0, 1.0, 1.0, 2.0, 2.000001], 4, 0.001, 4)
+        comp = CompositeGrid.LogDensedGrid(type=:uniform,
+            bound=[0.0, 10.0],
+            dense_at=[0.0, 1.0, 1.0, 2.0, 2.000001],
+            N=4,
+            minterval=0.001,
+            order=4)
         # println(comp.grid)
         # println(comp.inits)
         # println(CompositeGrid.denseindex(comp))

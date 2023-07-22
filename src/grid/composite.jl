@@ -334,6 +334,4 @@ end
 
 LogDensedGrid(; type, bound, dense_at, N, minterval, order, T=Float64, isperiodic=false) = LogDensedGrid(type, bound, dense_at, N, minterval, order, T; isperiodic=isperiodic)
 
-
-
 end
