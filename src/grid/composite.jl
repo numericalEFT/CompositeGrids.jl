@@ -211,6 +211,8 @@ function CompositeLogGrid(type, bound, N, minterval, d2s, order, T=Float64, invV
 
 end
 
+CompositeLogGrid(; type, bound, N, minterval, d2s, order, T=Float64, invVandermonde=SimpleG.invvandermonde(order)) = CompositeLogGrid(type, bound, N, minterval, d2s, order, T, invVandermonde)
+
 """
     function LogDensedGrid(type, bound, dense_at, N, minterval, order, T=Float64)
 
@@ -329,5 +331,9 @@ function LogDensedGrid(type, bound, dense_at, N, minterval, order, T=Float64; is
     #println("panel:",panel.grid)
 
 end
+
+LogDensedGrid(; type, bound, dense_at, N, minterval, order, T=Float64, isperiodic=false) = LogDensedGrid(type, bound, dense_at, N, minterval, order, T; isperiodic=isperiodic)
+
+
 
 end

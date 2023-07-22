@@ -127,7 +127,8 @@
     end
 
     @testset "LogGrid" begin
-        loggrid = SimpleGrid.Log{Float64}([0.0, 1.0], 6, 0.001, true)
+        # loggrid = SimpleGrid.Log{Float64}([0.0, 1.0], 6, 0.001, true)
+        loggrid = SimpleGrid.Log{Float64}(bound=[0.0, 1.0], N=6, minterval=0.001, d2s=true)
         println(loggrid)
         # println(SimpleGrid.denseindex(loggrid))
         @test floor(loggrid, 0.0) == 1
