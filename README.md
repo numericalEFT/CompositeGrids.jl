@@ -110,11 +110,11 @@ For example:
 An O(1) floor function is provided.
 
 BaryCheb grid is designed for interpolation. It's defined by the boundary and number of grid points,
-but the grid points are not distributed uniformly. The floor function is not optimized
+but the grid points are distributed according to Chebyshev nodes. The floor function is not optimized
 so the O(ln(N)) function will be used, but the interpolation is based on an optimized algorithm.
 
 GaussLegendre grid is designed for integration. It's defined by the boundary and number of grid points,
-but the grid points are not distributed uniformly. The floor function is not optimized
+but the grid points are distributed according to Gauss Legendre quadrature. The floor function is not optimized
 so the O(ln(N)) function will be used. The 1D integration is optimized.
 
 Also notice that there's open grids and closed grids. Closed grids means that the boundary points are
