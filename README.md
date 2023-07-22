@@ -22,12 +22,12 @@ and optimized for integration. The description is attached in the comments in th
     
     # Generating a log densed composite grid with LogDensedGrid()
     tgrid = CompositeGrid.LogDensedGrid(
-        :gauss,# The top layer grid is :gauss, optimized for integration. For interpolation use :cheb
-        [0.0, β],# The grid is defined on [0.0, β]
-        [0.0, β],# and is densed at 0.0 and β, as given by 2nd and 3rd parameter.
-        5,# N of log grid
-        0.005, # minimum interval length of log grid
-        5 # N of bottom layer
+        type=:gauss,# The top layer grid is :gauss, optimized for integration. For interpolation use :cheb
+        bound=[0.0, β],# The grid is defined on [0.0, β]
+        dense_at=[0.0, β],# and is densed at 0.0 and β, as given by 2nd and 3rd parameter.
+        N=5,# N of log grid
+        minterval=0.005, # minimum interval length of log grid
+        order=5 # N of bottom layer
     )
     # The grid has 3 layers.
     # The top layer is defined by the boundary and densed points. In this case its:
@@ -156,5 +156,38 @@ given, but only linear interpolation is implemented, even when some of the grids
 Integration over 1D grid is also provided. For most of simple grids it's given by linear integral, while for GaussLegendre grid it's
 optimized. For composite grids it's again recursively done so that the method depends on the type of lowest level grids.
 
+Differenciation is provided for 1D grid, and a high precision algorithm is implemented for BaryCheb grids.
+
 A detailed manual can be found [here](https://numericaleft.github.io/CompositeGrids.jl/dev/lib/interpolate/).
 
+An example of interpolation and differenciation is shown below:
+```julia
+using CompositeGrids
+β = π
+
+# Generating a log densed composite grid with LogDensedGrid()
+tgrid = CompositeGrid.LogDensedGrid(
+    type=:cheb,# The top layer grid is :cheb
+    bound=[0.0, β],# The grid is defined on [0.0, β]
+    dense_at=[0.0, β],# and is densed at 0.0 and β, as given by 2nd and 3rd parameter.
+    N=5,# N of log grid
+    minterval=0.005, # minimum interval length of log grid
+    order=5 # N of bottom layer
+)
+
+# function to be represented:
+f(t) = sin(t)
+# numerical value on grid points:
+data = [f(t) for t in tgrid]
+
+# integrate with integrate1D():
+sin1 = Interp.interp1D(data, tgrid, 1.0)
+dsin1 = Interp.differentiate1D(data, tgrid, 1.0)
+
+println("result=", (sin1, dsin1))
+println("comparing to:", (sin(1.0), cos(1.0)))
+```
+```
+result=(0.8414425112056995, 0.5400742649805592)
+comparing to:(0.8414709848078965, 0.5403023058681398)
+```
