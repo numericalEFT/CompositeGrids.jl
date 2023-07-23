@@ -11,20 +11,19 @@ makedocs(;
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://numericaleft.github.io/CompositeGrids.jl",
-        assets=String[],
+        assets=String[]
     ),
     pages=[
-        "Home" => "index.md",
-        "Manual" => Any[
-        ],
+        "Home" => "README.md",
+        "API reference" => "index.md",
         "Library" => Any[
             "lib/simple.md",
             "lib/composite.md",
             "lib/interpolate.md",
-                # map(s -> "lib/$(s)", sort(readdir(joinpath(@__DIR__, "src/lib"))))
-                # "Internals" => map(s -> "lib/$(s)", sort(readdir(joinpath(@__DIR__, "src/lib"))))
+            # map(s -> "lib/$(s)", sort(readdir(joinpath(@__DIR__, "src/lib"))))
+            # "Internals" => map(s -> "lib/$(s)", sort(readdir(joinpath(@__DIR__, "src/lib"))))
         ]
-    ],
+    ]
 )
 
 deploydocs(;

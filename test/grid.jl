@@ -12,6 +12,12 @@
     end
 
     @testset "ArbitraryGrid" begin
+
+        # resulted grid should be sorted
+        println("Testing Arbitrary constructor, a warning should appear.")
+        arbitrary = SimpleGrid.Arbitrary{Float64}([0.0, 0.2, 0.6, 0.8, 0.4, 1.0])
+        @test arbitrary.grid == [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+
         uniform = SimpleGrid.Uniform{Float64}([0.0, 1.0], 10)
         arbitrary = SimpleGrid.Arbitrary{Float64}(uniform.grid)
         println(arbitrary)
@@ -121,7 +127,8 @@
     end
 
     @testset "LogGrid" begin
-        loggrid = SimpleGrid.Log{Float64}([0.0, 1.0], 6, 0.001, true)
+        # loggrid = SimpleGrid.Log{Float64}([0.0, 1.0], 6, 0.001, true)
+        loggrid = SimpleGrid.Log{Float64}(bound=[0.0, 1.0], N=6, minterval=0.001, d2s=true)
         println(loggrid)
         # println(SimpleGrid.denseindex(loggrid))
         @test floor(loggrid, 0.0) == 1
@@ -204,7 +211,13 @@ end
         @test floor(comp, comp[end]) == comp.size - 1
         @test floor(comp, 1.0) == comp.size - 1
 
-        comp = CompositeGrid.LogDensedGrid(:uniform, [0.0, 10.0], [0.0, 1.0, 1.0, 2.0, 2.000001], 4, 0.001, 4)
+        # comp = CompositeGrid.LogDensedGrid(:uniform, [0.0, 10.0], [0.0, 1.0, 1.0, 2.0, 2.000001], 4, 0.001, 4)
+        comp = CompositeGrid.LogDensedGrid(type=:uniform,
+            bound=[0.0, 10.0],
+            dense_at=[0.0, 1.0, 1.0, 2.0, 2.000001],
+            N=4,
+            minterval=0.001,
+            order=4)
         # println(comp.grid)
         # println(comp.inits)
         # println(CompositeGrid.denseindex(comp))
@@ -229,6 +242,13 @@ end
         # println(comp.grid)
         comp = CompositeGrid.LogDensedGrid(:uniform, [0.0, 10.0], [0.5, 10.0], 4, 0.001, 4)
         # println(comp.grid)
+
+        # test edge case when two panel points are exactly minterval away
+        # raw panel will be [0.0, 5.0,5.001,5.002,10.0], 
+        # after construction it will be [0.0, 5.001, 10.0]
+        comp = CompositeGrid.LogDensedGrid(:uniform, [0.0, 10.0], [5.0, 5.002], 4, 0.001, 4)
+        @test length(comp.panel) == 3
+        @test isapprox(comp.panel[2], 5.001, atol=0.001)
     end
 
 end
