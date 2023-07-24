@@ -98,7 +98,7 @@ The `SimpleGrid` module in `CompositeGrids.jl` offers various basic grids that s
     [0.0, 0.00010000000000000005, 0.0010000000000000002, 0.010000000000000002, 0.1, 1.0]
 ```
 
-- **BaryCheb Grid:** Specifically designed for interpolation, it is defined by the boundary and number of grid points. The grid points are distributed according to Chebyshev nodes. The floor function is not optimized, so the O(ln(N)) function will be used, but the interpolation is based on an optimized algorithm.
+- **BaryCheb Grid:** Specifically designed for interpolation, it is defined by the boundary and number of grid points. The grid points are distributed according to Chebyshev nodes. The floor function is not optimized, so the O(ln(N)) function will be used, but the interpolation is based on an high precision algorithm with O(N).
 
 - **GaussLegendre Grid:** Tailored for integration purposes, it is defined by the boundary and number of grid points. The grid points are distributed according to Gauss-Legendre quadrature. The floor function is not optimized, so the O(ln(N)) function will be used. The 1D integration is optimized.
 
