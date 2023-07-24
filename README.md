@@ -174,3 +174,17 @@ println("comparing to:", (sin(1.0), cos(1.0)))
 result=(0.8414425112056995, 0.5400742649805592)
 comparing to:(0.8414709848078965, 0.5403023058681398)
 ```
+
+## Complexity of Operations
+
+| Grid             | Floor | Interpolate | Integrate | Differentiate |
+|------------------|------------------------|------------------------|----------------------|---------------------------|
+| Arbitrary        | O(ln(N))  | O(ln(N))      | O(N)   | O(ln(N))  |
+| Uniform          | O(1)   | O(1)       | O(N)  | O(1)   |
+| Log              | O(1)   | O(1)       | O(N)     | O(1)          |
+| BaryCheb         | O(ln(N))    | O(N)              | O(N)    | O(N)                |
+| GaussLegendre    | O(ln(N))      | O(ln(N))          | O(N)      | O(ln(N))     |
+| CompositeGrid    | O(floor(panel)*floor(sub)) | O(floor(panel)*interp(sub)) | O(N) | O(floor(panel)*diff(sub))  |
+
+**Note 1**: For `CompositeGrid`, the complexity depends on the type of the low-level grid in the hierarchy.
+**Note 2**: Interpolation and differentiation of ``BaryCheb`` are implemented with high-precision algorithm, thus much less grid points are needed despite complexity.
