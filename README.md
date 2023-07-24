@@ -5,16 +5,16 @@
 
 # Introduction
 
-CompositeGrids gives a unified interface to generate various common 1D grids
-and also the composite grids that is a combination of basic grids,
-together with the floor function, interpolation function and also integration function
-that is optimized for some of the grids.
+``CompositeGrids.jl`` is a powerful Julia package that provides a unified interface for generating a wide range of common 1D grids. In addition to basic grids, this package allows you to create composite grids by combining multiple fundamental grids. These composite grids are enriched with essential functionalities, including floor function, interpolation function, and integration function, all of which are optimized to enhance their performance on specific grids.
 
+With ``CompositeGrids.jl``, you can effortlessly construct complex grids and efficiently handle various numerical tasks with ease. Whether you are working on scientific simulations, data analysis, or any other domain that involves grid-based calculations, this package will be your go-to tool for managing grids effectively.
 
 # Quick Start
 
 In the following example we show how to generate a &tau; grid from 0 to &beta;, log-densed at 0 and &beta;,
 and optimized for integration. The description is attached in the comments in the code.
+
+In this quick start example, we will demonstrate how to generate a &tau; grid from 0 to &beta;, log-densed at 0 and &beta;, and optimized for integration using the ``CompositeGrids.jl`` package. We will provide descriptive comments in the code to guide you through the process.
 
 ```julia
     using CompositeGrids
@@ -58,46 +58,40 @@ and optimized for integration. The description is attached in the comments in th
 ```
 
 # Installation
-
-Static version could be installed via standard package manager with Pkg.add("CompositeGrids").
-
-For developing version, git clone this repo and add with Pkg.develop("directory/of/the/repo").
-
+To install ``CompositeGrids.jl``, use Julia's package manager. Open the Julia REPL, type `]` to enter the package mode, and then:
+```
+pkg> add CompositeGrids.jl
+```
 
 # Manual
 
-
 ## Basics
 
-The grids are provided in two modules, SimpleGrid and CompositeGrid. SimpleGrid consists of several
-common 1D grids that is defined straightforward and has simple structure. CompositeGrid defines a
-general type of grids composed by a panel grid and a set of subgrids. The common interface of grids
-are the following:
+The ``CompositeGrids.jl`` package offers two modules for working with 1D grids: ``SimpleGrid`` and ``CompositeGrid``. These modules provide a collection of common 1D grids with straightforward definitions and simple structures. Additionally, ``CompositeGrid`` defines a more general type of grid, composed of a panel grid and a set of subgrids, allowing for more flexibility in grid construction.
 
--   g.bound gives the boundary of the interval of the grid.
--   g.size gives the total number of grid points.
--   g.grid gives the array of grid points.
--   g[i] returns the i-th grid point, same as g.grid[i].
--   floor(g, x) returns the largest index of grid point where g[i]<x. Return 1 for x<g[1] and (grid.size-1) for x>g[end], so that both floor() and (floor()+1) are valid grid indices.
+The common interface for grids includes the following properties and methods:
 
-Interpolation and integration are also provided, with different implemented functions for different grids.
+ -   ``g.bound``: This property gives the boundary of the interval of the grid. It provides a clear indication of the range covered by the grid.
 
+ -   ``g.size``: This property gives the total number of grid points in the grid. It helps to determine the grid's resolution and granularity.
+
+ -   ``g.grid``: This property gives an array of grid points. The array contains the coordinates of all the grid points within the specified boundary.
+
+ -   ``g[i]``: This method returns the i-th grid point, which is the same as ``g.grid[i]``. It allows for direct access to specific grid points.
+
+ -   ``floor(g, x)``: This method returns the largest index of the grid point where ``g[i] < x``. For values of x below the first grid point, it returns 1, and for values greater than the last grid point, it returns ``(grid.size - 1)``. This ensures that both ``floor()`` and ``(floor() + 1)`` are valid grid indices for any value of x.
+
+The ``CompositeGrids.jl`` package also provides interpolation and integration functionalities for the grids. Different implementations are available for different types of grids, allowing for efficient numerical calculations tailored to each grid type.
 
 ## Simple Grids
 
-Various basic grids are designed for use and also as components of composite grids, including:
-Arbitrary, Uniform, Log, BaryCheb, and GaussLegendre.
+The `SimpleGrid` module in `CompositeGrids.jl` offers various basic grids that serve as standalone grids and components of composite grids. The available basic grids include:
 
-Arbitrary grid is the most general basic grid, which takes an array and turn it into a grid.
-An O(ln(N)) floor function based on searchsortedfirst() is provided.
+- **Arbitrary Grid:** The most general basic grid, which takes an array and converts it into a grid. It provides an efficient O(ln(N)) floor function based on `searchsortedfirst()`.
 
-Uniform grid is defined by the boundary and number of grid points.
-An O(1) floor function is provided.
+- **Uniform Grid:** Defined by the boundary and the number of grid points. It offers an O(1) floor function for rapid point location.
 
-Log grid is defined by the boundary, number of grid points, minimum interval, and also the direction.
-A log densed grid is generated according to the parameters provided.
-For example:
-
+- **Log Grid:** Defined by the boundary, number of grid points, minimum interval, and direction. It generates a log-dense grid based on the provided parameters. For example:
 ```julia
     using CompositeGrids
     loggrid = SimpleGrid.Log{Float64}([0.0,1.0], 6, 0.0001, true)
@@ -106,57 +100,50 @@ For example:
 ```
     [0.0, 0.00010000000000000005, 0.0010000000000000002, 0.010000000000000002, 0.1, 1.0]
 ```
-
 An O(1) floor function is provided.
 
-BaryCheb grid is designed for interpolation. It's defined by the boundary and number of grid points,
-but the grid points are distributed according to Chebyshev nodes. The floor function is not optimized
-so the O(ln(N)) function will be used, but the interpolation is based on an optimized algorithm.
+- **BaryCheb Grid:** Specifically designed for interpolation, it is defined by the boundary and number of grid points. The grid points are distributed according to Chebyshev nodes. The floor function is not optimized, so the O(ln(N)) function will be used, but the interpolation is based on an optimized algorithm.
 
-GaussLegendre grid is designed for integration. It's defined by the boundary and number of grid points,
-but the grid points are distributed according to Gauss Legendre quadrature. The floor function is not optimized
-so the O(ln(N)) function will be used. The 1D integration is optimized.
+- **GaussLegendre Grid:** Tailored for integration purposes, it is defined by the boundary and number of grid points. The grid points are distributed according to Gauss-Legendre quadrature. The floor function is not optimized, so the O(ln(N)) function will be used. The 1D integration is optimized.
 
-Also notice that there's open grids and closed grids. Closed grids means that the boundary points are
-also grid points, while open grids means the opposite. Only BaryCheb and GaussLegendre are open.
+It's important to note that grids can be categorized into open grids and closed grids. Closed grids indicate that the boundary points are also included as grid points, while open grids exclude the boundary points. The ``BaryCheb`` and `GaussLegendre` grids are examples of open grids.
 
 A detailed manual can be found [here](https://numericaleft.github.io/CompositeGrids.jl/dev/lib/simple/).
 
-
 ## Composite Grids
 
-Composite grid is a general type of grids where the whole interval is first divided by a panel grid,
-then each interval of a panel grid is divided by a smaller grid in subgrids. Subgrid could also be
-composite grid.
+The `CompositeGrid` module in `CompositeGrids.jl` provides a general type of grid where the entire interval is first divided by a panel grid, and then each interval of the panel grid is further divided by smaller grids called subgrids. Notably, subgrids can also be composite grids themselves, allowing for hierarchical grid structures.
 
-LogDensedGrid is a useful generator of CompositeGrid which gives a general solution when an 1D grid on an
-interval is needed to be log-densed around several points. For example, &tau; grids need to be densed around
-0 and &beta;, and momentum grids need to be densed around Fermi momentum.
-The grid is defined as a three-layer composite grid with the top layer being an Arbitrary grid defined by
-the boundary and densed points, the middle layer a Log grid which is densed at the points required, and the
-bottom layer a grid of three options. Three types are :cheb, :gauss, and :uniform, which corresponds to
-BaryCheb grid for interpolation, GaussLegendre grid for integration, and Uniform grid for general use.
-The floor function is defined recursively, i.e. the floor function of the panel grid is called to find the
-corresponding subgrid, and then the floor function of the subgrid is called to find the result. Since the
-subgrids could also be CompositeGrid, this process continues until the lowest level of the subgrids is reached.
+The `LogDensedGrid` is a particularly useful generator of composite grids that offers a general solution when a log-dense 1D grid is needed around specific points within an interval. For example, grids like &tau; grids, which require densification around 0 and &beta;, or momentum grids, which need densification around the Fermi momentum, can be efficiently generated using `LogDensedGrid`.
+
+The `LogDensedGrid` is defined as a three-layer composite grid:
+
+1. **Top Layer (Arbitrary Grid):** This layer is defined by the boundary and the points where the grid needs to be dense. It allows for high flexibility in defining the grid structure.
+
+2. **Middle Layer (Log Grid):** This layer is log-dense at the specified points, ensuring finer resolution in regions of interest.
+
+3. **Bottom Layer (Grid of Options):** The bottom layer can be one of three options: `:cheb` for BaryCheb grid used for interpolation, `:gauss` for GaussLegendre grid used for integration, and `:uniform` for a uniform grid that serves general purposes.
+
+The floor function of the composite grid is defined recursively. When locating a grid point, the floor function of the panel grid is called first to find the corresponding subgrid, and then the floor function of the subgrid is called to determine the final result. Since subgrids can themselves be composite grids, this recursive process continues until the lowest level of subgrids is reached.
+
+The hierarchical nature of composite grids allows for the creation of sophisticated grid structures tailored to specific needs, making them a powerful tool for various scientific and computational applications.
 
 A detailed manual can be found [here](https://numericaleft.github.io/CompositeGrids.jl/dev/lib/composite/).
 
 
 ## Interpolation and Integration
 
-Interpolation gives an estimate of the function value at x with given grid and function value on the grid.
-For most of the simple grids the interpolation is given by linear interpolation with the floor function to find
-the corresponding grid points. BaryCheb uses an optimized algorithm for interpolation which makes use of the information
-of all grid points, and thus gives a more precise interpolation with the same number of grid points, given the condition that
-the function itself is smooth enough. For composite grids, the interpolation is done recursively, so that the final result
-depends on the type of lowest level grid. Interpolation for higher dimension where the data is defined on a list of grids is also
-given, but only linear interpolation is implemented, even when some of the grids are BaryCheb.
+### Interpolation
 
-Integration over 1D grid is also provided. For most of simple grids it's given by linear integral, while for GaussLegendre grid it's
-optimized. For composite grids it's again recursively done so that the method depends on the type of lowest level grids.
+Interpolation in `CompositeGrids.jl` provides an estimate of the function value at a given point `x` using the provided grid and function values on the grid points. For most of the simple grids, linear interpolation is used in conjunction with the floor function to locate the corresponding grid points. Notably, the BaryCheb grid employs an optimized algorithm for interpolation, leveraging information from all grid points to yield more precise results with the same number of grid points. This enhanced interpolation is subject to the condition that the function itself is smooth enough. When working with composite grids, the interpolation process is performed recursively, and the final result depends on the type of the lowest-level grid. For higher dimensions where data is defined on a list of grids, linear interpolation is provided, even when some of the grids are of the BaryCheb type.
 
-Differenciation is provided for 1D grid, and a high precision algorithm is implemented for BaryCheb grids.
+### Integration
+
+Integration over 1D grids is supported in `CompositeGrids.jl`. For most of the simple grids, linear integration is employed. However, for ``GaussLegendre`` grids and ``BaryCheb`` grids, an optimized integration method is used. Similar to interpolation, integration for composite grids is also carried out recursively, and the chosen method depends on the type of the lowest-level grids.
+
+### Differentiation
+
+The `CompositeGrids.jl` package offers differentiation for 1D grids. Specifically, a high-precision algorithm is implemented for ``BaryCheb`` grids, resulting in accurate differentiation results.
 
 A detailed manual can be found [here](https://numericaleft.github.io/CompositeGrids.jl/dev/lib/interpolate/).
 
