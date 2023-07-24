@@ -91,7 +91,7 @@ The `SimpleGrid` module in `CompositeGrids.jl` offers various basic grids that s
 
 - **Uniform Grid:** Defined by the boundary and the number of grid points. It offers an O(1) floor function for rapid point location.
 
-- **Log Grid:** Defined by the boundary, number of grid points, minimum interval, and direction. It generates a log-dense grid based on the provided parameters. For example:
+- **Log Grid:** Defined by the boundary, number of grid points, minimum interval, and direction. It generates a log-dense grid based on the provided parameters. An O(1) floor function is provided. For example:
 ```julia
     using CompositeGrids
     loggrid = SimpleGrid.Log{Float64}([0.0,1.0], 6, 0.0001, true)
@@ -100,7 +100,6 @@ The `SimpleGrid` module in `CompositeGrids.jl` offers various basic grids that s
 ```
     [0.0, 0.00010000000000000005, 0.0010000000000000002, 0.010000000000000002, 0.1, 1.0]
 ```
-An O(1) floor function is provided.
 
 - **BaryCheb Grid:** Specifically designed for interpolation, it is defined by the boundary and number of grid points. The grid points are distributed according to Chebyshev nodes. The floor function is not optimized, so the O(ln(N)) function will be used, but the interpolation is based on an optimized algorithm.
 
