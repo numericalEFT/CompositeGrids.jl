@@ -9,22 +9,25 @@
 
 With ``CompositeGrids.jl``, you can effortlessly construct complex grids and efficiently handle various numerical tasks with ease. Whether you are working on scientific simulations, data analysis, or any other domain that involves grid-based calculations, this package will be your go-to tool for managing grids effectively.
 
+
+# Installation
+To install ``CompositeGrids.jl``, use Julia's package manager. Open the Julia REPL, type `]` to enter the package mode, and then:
+```
+pkg> add CompositeGrids.jl
+```
+
 # Quick Start
 
-In the following example we show how to generate a &tau; grid from 0 to &beta;, log-densed at 0 and &beta;,
-and optimized for integration. The description is attached in the comments in the code.
-
-In this quick start example, we will demonstrate how to generate a &tau; grid from 0 to &beta;, log-densed at 0 and &beta;, and optimized for integration using the ``CompositeGrids.jl`` package. We will provide descriptive comments in the code to guide you through the process.
+In this quick start example, we will demonstrate how to generate a grid from 0 to 1, log-densed at 0 and 1, and optimized for integration using the ``CompositeGrids.jl`` package. We will provide descriptive comments in the code to guide you through the process.
 
 ```julia
     using CompositeGrids
-    β = 10
     
     # Generating a log densed composite grid with LogDensedGrid()
     tgrid = CompositeGrid.LogDensedGrid(
         type=:gauss,# The top layer grid is :gauss, optimized for integration. For interpolation use :cheb
-        bound=[0.0, β],# The grid is defined on [0.0, β]
-        dense_at=[0.0, β],# and is densed at 0.0 and β, as given by 2nd and 3rd parameter.
+        bound=[0.0, 1],# The grid is defined on [0.0, β]
+        dense_at=[0.0, 1],# and is densed at 0.0 and β, as given by 2nd and 3rd parameter.
         N=5,# N of log grid
         minterval=0.005, # minimum interval length of log grid
         order=5 # N of bottom layer
@@ -38,7 +41,7 @@ In this quick start example, we will demonstrate how to generate a &tau; grid fr
     println("First subgrid of bottom layer:",tgrid.subgrids[1].subgrids[1].grid)
     
     # function to be integrated:
-    f(t) = exp(t)+exp(β-t)
+    f(t) = exp(t)+exp(1-t)
     # numerical value on grid points:
     data = [f(t) for (ti, t) in enumerate(tgrid.grid)]
     
@@ -46,21 +49,15 @@ In this quick start example, we will demonstrate how to generate a &tau; grid fr
     int_result = Interp.integrate1D(data, tgrid)
     
     println("result=",int_result)
-    println("comparing to:",2*(exp(β)-1))
+    println("comparing to:",2*(exp(1)-1))
 ```
 
 ```
-    Top layer:[0.0, 5.0, 10.0]
-    First subgrid of middle layer:[0.0, 0.005000000000000001, 0.05000000000000001, 0.5, 5.0]
-    First subgrid of bottom layer:[0.00023455038515334025, 0.0011538267247357924, 0.0025000000000000005, 0.0038461732752642086, 0.004765449614846661]
-    result=44050.91248775534
-    comparing to:44050.931589613436
-```
-
-# Installation
-To install ``CompositeGrids.jl``, use Julia's package manager. Open the Julia REPL, type `]` to enter the package mode, and then:
-```
-pkg> add CompositeGrids.jl
+Top layer:[0.0, 0.5, 1.0]
+First subgrid of middle layer:[0.0, 0.005000000000000001, 0.023207944168063897, 0.1077217345015942, 0.5]
+First subgrid of bottom layer:[0.00023455038515334025, 0.0011538267247357924, 0.0025000000000000005, 0.0038461732752642086, 0.004765449614846661]
+result=3.43656365691809
+comparing to:3.43656365691809
 ```
 
 # Manual
