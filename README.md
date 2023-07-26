@@ -1,6 +1,6 @@
 [![img](https://img.shields.io/badge/docs-dev-blue.svg)](https://numericaleft.github.io/CompositeGrids.jl/dev/)
 [![img](https://github.com/numericaleft/CompositeGrids.jl/workflows/CI/badge.svg)](https://github.com/numericaleft/CompositeGrids.jl/actions)
-[![img](https://codecov.io/gh/numericalEFT/CompositeGrids.jl/branch/main/graph/badge.svg?token=WN6HO1XASY)](https://codecov.io/gh/numericaleft/CompositeGrids.jl)
+[![img](https://codecov.io/gh/numericalEFT/CompositeGrids.jl/branch/master/graph/badge.svg?token=WN6HO1XASY)](https://codecov.io/gh/numericaleft/CompositeGrids.jl)
 
 
 # Introduction
