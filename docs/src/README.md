@@ -1,6 +1,6 @@
 [![img](https://img.shields.io/badge/docs-dev-blue.svg)](https://numericaleft.github.io/CompositeGrids.jl/dev/)
 [![img](https://github.com/numericaleft/CompositeGrids.jl/workflows/CI/badge.svg)](https://github.com/numericaleft/CompositeGrids.jl/actions)
-[![img](https://codecov.io/gh/numericalEFT/CompositeGrids.jl/branch/main/graph/badge.svg?token=WN6HO1XASY)](https://codecov.io/gh/numericaleft/CompositeGrids.jl)
+[![img](https://codecov.io/gh/numericalEFT/CompositeGrids.jl/branch/master/graph/badge.svg?token=WN6HO1XASY)](https://codecov.io/gh/numericaleft/CompositeGrids.jl)
 
 
 # Introduction
@@ -91,7 +91,10 @@ The `SimpleGrid` module in `CompositeGrids.jl` offers various basic grids that s
 - **Log Grid:** Defined by the boundary, number of grid points, minimum interval, and direction. It generates a log-dense grid based on the provided parameters. An O(1) floor function is provided. For example:
 ```julia
     using CompositeGrids
-    loggrid = SimpleGrid.Log{Float64}([0.0,1.0], 6, 0.0001, true)
+    loggrid = SimpleGrid.Log{Float64}(
+        bound=[0.0,1.0], N=6, 
+        minterval=0.0001, 
+        d2s = true) # dense to sparse
     println(loggrid.grid)
 ```
 ```
