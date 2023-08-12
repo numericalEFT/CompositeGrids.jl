@@ -2,9 +2,10 @@ using CompositeGrids, Test, StaticArrays, LinearAlgebra, Printf, Random, Statist
 # import Test: @test, @testset
 
 if isempty(ARGS)
-    include("chebyshev.jl")
-    include("grid.jl")
-    include("interpolate.jl")
+    include("BaryChebTools.jl")
+    include("SimpleG.jl")
+    include("CompositeG.jl")
+    include("Interp.jl")
     # include("io.jl")
     include("mc.jl")
     include("periodic.jl")
