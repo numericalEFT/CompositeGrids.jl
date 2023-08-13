@@ -248,6 +248,7 @@ function Uniform{T,BTIN}(bound, N;
         Ntot = N - 1
         interval = (gpbound[2] - gpbound[1]) / Ntot
         grid = gpbound[1] .+ Vector(1:N) .* interval .- (interval)
+        grid[1], grid[end] = gpbound[1], gpbound[end] # ensure bounds of grid points are exactly gpbound
         weight = similar(grid)
         for i in 1:N
             if i == 1
