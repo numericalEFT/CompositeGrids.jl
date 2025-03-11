@@ -7,7 +7,6 @@ export BaryCheb1D, interp1D, interpND, integrate1D, integrateND
 #---------------- 1D barycheb ------------------------
 ######################################################
 
-
 """
     function barychebinit(n::Integer)
 
