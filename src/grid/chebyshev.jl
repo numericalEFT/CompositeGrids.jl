@@ -27,6 +27,15 @@ function barychebinit(n)
     end
     return x, w
 end
+"""
+barychebinit(::Type{T}, n) where {T}
+Function barychebinit with arbitrary type T
+# Arguments
+- `n`: order of the Chebyshev interpolation
+# Returns
+- Chebyshev nodes
+- Barycentric Lagrange interpolation weights
+"""
 function barychebinit(::Type{T}, n) where {T}
     x = zeros(T, n)
     w = similar(x)
