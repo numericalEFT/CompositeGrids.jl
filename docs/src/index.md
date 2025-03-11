@@ -14,7 +14,6 @@ Pages = [
     "lib/simple.md",
     "lib/composite.md",
     "lib/interpolate.md",
-    "lib/barycheb.md",
 ]
 Depth = 1
 ```
