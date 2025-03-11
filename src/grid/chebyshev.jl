@@ -1,3 +1,6 @@
+"""
+Tools for barycentric Chebyshev grids.
+"""
 module BaryChebTools
 
 using ..StaticArrays
@@ -8,7 +11,8 @@ export BaryCheb1D, interp1D, interpND, integrate1D, integrateND
 ######################################################
 
 """
-barychebinit(n)
+    function barychebinit(n)
+
 Get Chebyshev nodes of first kind and corresponding barycentric Lagrange interpolation weights. 
 Reference: Berrut, J.P. and Trefethen, L.N., 2004. Barycentric lagrange interpolation. SIAM review, 46(3), pp.501-517.
 # Arguments
@@ -28,7 +32,8 @@ function barychebinit(n)
     return x, w
 end
 """
-barychebinit(::Type{T}, n) where {T}
+    function barychebinit(::Type{T}, n) where {T}
+
 Function barychebinit with arbitrary type T
 # Arguments
 - `n`: order of the Chebyshev interpolation
@@ -153,7 +158,8 @@ end
 end
 
 """
-function barycheb(n, x, f, wc, xc)
+    function barycheb(n, x, f, wc, xc)
+
 Barycentric Lagrange interpolation at Chebyshev nodes
 Reference: Berrut, J.P. and Trefethen, L.N., 2004. Barycentric lagrange interpolation. SIAM review, 46(3), pp.501-517.
 # Arguments
