@@ -1,6 +1,3 @@
-"""
-Tools for barycentric Chebyshev grids.
-"""
 module BaryChebTools
 
 using ..StaticArrays
@@ -10,17 +7,6 @@ export BaryCheb1D, interp1D, interpND, integrate1D, integrateND
 #---------------- 1D barycheb ------------------------
 ######################################################
 
-"""
-    function barychebinit(n)
-
-Get Chebyshev nodes of first kind and corresponding barycentric Lagrange interpolation weights. 
-Reference: Berrut, J.P. and Trefethen, L.N., 2004. Barycentric lagrange interpolation. SIAM review, 46(3), pp.501-517.
-# Arguments
-- `n`: order of the Chebyshev interpolation
-# Returns
-- Chebyshev nodes
-- Barycentric Lagrange interpolation weights
-"""
 function barychebinit(n)
     x = zeros(Float64, n)
     w = similar(x)
@@ -31,16 +17,7 @@ function barychebinit(n)
     end
     return x, w
 end
-"""
-    function barychebinit(::Type{T}, n) where {T}
 
-Function barychebinit with arbitrary type T
-# Arguments
-- `n`: order of the Chebyshev interpolation
-# Returns
-- Chebyshev nodes
-- Barycentric Lagrange interpolation weights
-"""
 function barychebinit(::Type{T}, n) where {T}
     x = zeros(T, n)
     w = similar(x)
@@ -157,20 +134,6 @@ end
     return invmat*b
 end
 
-"""
-    function barycheb(n, x, f, wc, xc)
-
-Barycentric Lagrange interpolation at Chebyshev nodes
-Reference: Berrut, J.P. and Trefethen, L.N., 2004. Barycentric lagrange interpolation. SIAM review, 46(3), pp.501-517.
-# Arguments
-- `n`: order of the Chebyshev interpolation
-- `x`: coordinate to interpolate
-- `f`: array of size n, function at the Chebyshev nodes
-- `wc`: array of size n, Barycentric Lagrange interpolation weights
-- `xc`: array of size n, coordinates of Chebyshev nodes
-# Returns
-- Interpolation result
-"""
 function barycheb(n, x, f, wc, xc)
     #print("type of data in cheb $(typeof.([n,x,f,wc,xc]))\n")
     #print("interp: $(f[1])\n")
