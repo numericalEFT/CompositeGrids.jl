@@ -20,6 +20,7 @@ makedocs(;
             "lib/simple.md",
             "lib/composite.md",
             "lib/interpolate.md",
+            "lib/chebyshev.md",
             # map(s -> "lib/$(s)", sort(readdir(joinpath(@__DIR__, "src/lib"))))
             # "Internals" => map(s -> "lib/$(s)", sort(readdir(joinpath(@__DIR__, "src/lib"))))
         ]

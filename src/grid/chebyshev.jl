@@ -7,9 +7,12 @@ export BaryCheb1D, interp1D, interpND, integrate1D, integrateND
 #---------------- 1D barycheb ------------------------
 ######################################################
 
+
 """
-barychebinit(n)
+    function barychebinit(n::Integer)
+
 Get Chebyshev nodes of first kind and corresponding barycentric Lagrange interpolation weights. 
+
 Reference: Berrut, J.P. and Trefethen, L.N., 2004. Barycentric lagrange interpolation. SIAM review, 46(3), pp.501-517.
 # Arguments
 - `n`: order of the Chebyshev interpolation
@@ -27,6 +30,12 @@ function barychebinit(n)
     end
     return x, w
 end
+
+"""
+    function barychebinit(::Type{T}, n) where {T}
+
+Same as [`barychebinit(Tuple{Any})`](@ref), but returns two arrays of type `T`.
+"""
 function barychebinit(::Type{T}, n) where {T}
     x = zeros(T, n)
     w = similar(x)
@@ -144,9 +153,12 @@ end
 end
 
 """
-function barycheb(n, x, f, wc, xc)
-Barycentric Lagrange interpolation at Chebyshev nodes
+    function barycheb(n, x, f, wc, xc)
+
+Barycentric Lagrange interpolation at Chebyshev nodes.
+
 Reference: Berrut, J.P. and Trefethen, L.N., 2004. Barycentric lagrange interpolation. SIAM review, 46(3), pp.501-517.
+
 # Arguments
 - `n`: order of the Chebyshev interpolation
 - `x`: coordinate to interpolate
